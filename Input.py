@@ -54,8 +54,16 @@ class InputUtils:
             system.error("GA 정보 파일을 찾을 수 없습니다.")
 
     @staticmethod
-    def set_noneRTtasks(system):
+    def set_noneRTtasks(system, input_file="input_nonrtt.txt"):
         # TODO 파일 가져오기?
         # ...
-        system.non_rt_tasks.append(NoneRTTask(at, bt))
+        try:
+            with open(input_file, "r", encoding='UTF8') as f:
+                n_task = int(f.readline())
+                for i in range(n_task):
+                    temp = f.readline().split()
+                    system.non_rt_tasks.append(NoneRTTask(at = int(temp[0]) , bt = int(temp[1])))
+        except FileNotFoundError:
+            system.error("nonRTt 정보 파일을 찾을 수 없습니다.")
+
         pass
