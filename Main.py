@@ -1,4 +1,4 @@
-from System import Dram, Hm, DvfsDram, DvfsHm, GA
+from System import Dram, Hm, DvfsDram, DvfsHm, RT_GA
 
 system = int(input("[1]DRAM, [2]HM, [3]DVFS_DRAM, [4]DVFS_HM, [5]FIXED(GA), [6]ALL: "))
 end_sim_time = int(input("시뮬레이션 시간: "))
@@ -13,13 +13,13 @@ elif system == 3:
 elif system == 4:
     DvfsHm(end_sim_time, verbose).run()
 elif system == 5:
-    GA(end_sim_time, verbose).run()
+    RT_GA(end_sim_time, verbose).run()
 elif system == 6:
     Dram(end_sim_time, verbose).run()
     Hm(end_sim_time, verbose).run()
     DvfsDram(end_sim_time, verbose).run()
     DvfsHm(end_sim_time, verbose).run()
-    GA(end_sim_time, verbose).run()
+    RT_GA(end_sim_time, verbose).run()
 
 
 

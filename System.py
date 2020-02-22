@@ -25,6 +25,7 @@ class System(metaclass=ABCMeta):
         self.verbose = verbose
 
         self.tasks = []
+        self.non_rt_tasks = []
         self.wait_period_queue = []
         self.queue = []
 
@@ -264,7 +265,7 @@ class DvfsHm(System):
         return False
 
 
-class GA(System):
+class RT_GA(System):
     def __init__(self, end_sim_time: int, verbose: int):
         super().__init__(end_sim_time, verbose)
         self.name = "GA(Fixed)"

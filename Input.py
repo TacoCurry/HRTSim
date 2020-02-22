@@ -55,8 +55,6 @@ class InputUtils:
 
     @staticmethod
     def set_noneRTtasks(system, input_file="input_nonrtt.txt"):
-        # TODO 파일 가져오기?
-        # ...
         try:
             with open(input_file, "r", encoding='UTF8') as f:
                 n_task = int(f.readline())
@@ -65,5 +63,3 @@ class InputUtils:
                     system.non_rt_tasks.append(NoneRTTask(at = int(temp[0]) , bt = int(temp[1])))
         except FileNotFoundError:
             system.error("nonRTt 정보 파일을 찾을 수 없습니다.")
-
-        pass
