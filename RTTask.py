@@ -1,4 +1,4 @@
-class Task:
+class RTTask:
     def __init__(self, no: int, wcet, period, mem_req, mem_active_ratio, cpu):
         self.wcet = wcet
         self.period = self.deadline = period
@@ -23,7 +23,7 @@ class Task:
 
     def calc_priority(self) -> float:
         # min heap 사용을 위해 역수로 계산.
-        return float(self.deadline)/self.det_remain
+        return float(self.deadline) / self.det_remain
 
     def calc_det(self):
         new_det = self.wcet / min(self.cpu_frequency.wcet_scale, self.memory.wcet_scale)
@@ -50,7 +50,7 @@ class Task:
 
     def check_task(self):
         if self.det == 0:
-            raise Exception(self.desc_task()+": zero det.")
+            raise Exception(self.desc_task() + ": zero det.")
         if self.det < self.det_remain:
             raise Exception(self.desc_task() + ": invalid det.")
         if self.deadline < 0:
@@ -94,3 +94,9 @@ class Task:
             print(f'{system.time}부터 {system.time + 1}까지 task {self.no} 실행 '
                   f'(cpu_freq:{self.cpu_frequency.wcet_scale}, '
                   f'memory_type:{self.memory.get_type_str()})')
+
+
+class NoneRTTask:
+    def __init__(self, at, bt):
+        self.at = at
+        self.bt = bt

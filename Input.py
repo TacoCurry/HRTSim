@@ -1,5 +1,5 @@
 from Memory import Memories
-from Task import Task
+from RTTask import RTTask, NoneRTTask
 
 
 class InputUtils:
@@ -36,8 +36,8 @@ class InputUtils:
                 n_task = int(f.readline())
                 for i in range(n_task):
                     temp = f.readline().split()
-                    system.tasks.append(Task(no=i+1, wcet=int(temp[0]), period=int(temp[1]),
-                                             mem_req=int(temp[2]), mem_active_ratio=float(temp[3]), cpu=system.CPU))
+                    system.tasks.append(RTTask(no=i + 1, wcet=int(temp[0]), period=int(temp[1]),
+                                               mem_req=int(temp[2]), mem_active_ratio=float(temp[3]), cpu=system.CPU))
         except FileNotFoundError:
             system.error("task 정보 파일을 찾을 수 없습니다.")
 
@@ -52,3 +52,10 @@ class InputUtils:
                     system.assigned_MEM.append(int(temp[1]))
         except FileNotFoundError:
             system.error("GA 정보 파일을 찾을 수 없습니다.")
+
+    @staticmethod
+    def set_noneRTtasks(system):
+        # TODO 파일 가져오기?
+        # ...
+        system.non_rt_tasks.append(NoneRTTask(at, bt))
+        pass
