@@ -1,7 +1,7 @@
 # 경성 태스크를 항상 오리지널 방식으로 수행하며, 비실시간이 들어오면 남는시간에 실행시켜주는 방식
 # 대조군 알고리즘. 유전알고리즘 쓰지 않음.
 from abc import *
-from CPU import NoneDVFSCPU, DVFSCPU
+from Processor import NoneDVFSCPU, DVFSCPU
 from Memory import Memory
 import heapq
 import sys

@@ -1,5 +1,5 @@
 from abc import *
-from CPU import NoneDVFSCPU, DVFSCPU
+from Processor import NoneDVFSCPU, DVFSCPU
 from Memory import Memory
 import heapq
 import sys
@@ -8,12 +8,12 @@ from Report import Report
 
 
 class System(metaclass=ABCMeta):
-    """super class of all POLICYs"""
-    V_NO = 0
+    # For Debug Mode
+    V_NORMAL = 0
     V_SIMPLE = 1
     V_DETAIL = 2
 
-    def __init__(self, end_sim_time: int, verbose: int):
+    def __init__(self, end_sim_time, verbose):
         self.name = None
         self.desc = None
 
