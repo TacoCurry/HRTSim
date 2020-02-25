@@ -1,365 +1,129 @@
 from abc import *
-from Processor import NoneDVFSCPU, DVFSCPU
-from Memory import Memory
 import heapq
-import sys
-from Input import InputUtils
-from Report import Report
 
 
 class System(metaclass=ABCMeta):
-    # For Debug Mode
-    V_NORMAL = 0
-    V_SIMPLE = 1
-    V_DETAIL = 2
+    VERBOSE_SIMPLE = 0
+    VERBOSE_DEBUG = 1
+    VERBOSE_DEBUG_HARD = 2
 
-    def __init__(self, end_sim_time, verbose):
-        self.name = None
-        self.desc = None
-
-        self.CPU = None
-        self.memories = None
-
-        self.time = 0
-        self.end_sim_time = end_sim_time
+    def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
+        self.sim_time = sim_time
         self.verbose = verbose
+        self.processor = processor
+        self.memories = memories
+        self.rt_tasks = rt_tasks
+        self.non_rt_tasks = non_rt_tasks
 
-        self.tasks = []
-        self.non_rt_tasks = []
-        self.wait_period_queue = []
-        self.queue = []
+        # 현재 주기안에서 실행 대기중인 rt-task가 담김
+        # 원소는 (PD2를 이용한 우선순위, 태스크 인스턴스)로 담아서 우선순위 큐로 구현
+        self.rt_queue = []
 
-        self.sum_utils = 0
-        self.n_utils = 0
+        # 현재 주기 수행은 끝났으며 다음 주기의 시작을 기다리는 rt-task가 담김
+        # 원소는 (다음 주기 시작시간, 태스크 인스턴스)로 담아서 주기 시작시간에 대한 우선순위 큐로 구현
+        self.rt_wait_queue = []
+
+        self.non_rt_queue = []
+        self.non_rt_tasks_point = 0
+
+    def print_debug(self, time):
+        # TODO rt_queue와 non_rt_queue 출력 코드 필요
+        if self.verbose == System.VERBOSE_DEBUG_HARD:
+            pass
+
+    def setup_tasks(self):
+        # TODO 시뮬레이션 시작 전 태스크 셋팅하는 코드
+        # 모든 rt_task들을 rt_wait_queue에 넣어야 할듯.. 0 퀀텀에서 모두 주기 시작이므
+        pass
+
+    def check_new_non_rt(self, time):
+        # TODO 새로 들어온 non_rt 태스크가 존재하는지 확인 후로, 있다 non_rt_queue에 넣어주는 코드면
+        # 동시에 여러 태스크가 들어올 수 있다는 점에도 유의
+        pass
+
+    def check_wait_peroid_queue(self, time):
+        # TODO rt_wait_queue에서 다음 주기의 시작을 기다리고 있는 rt_task 확인하고 새로운 주기이면 큐 옮겨주기
+        pass
+
+    def print_final_report(self):
+        # TODO 최종 결과 출력하는 코드
+        pass
+
+    def push_rt_queue(self, rt_task):
+        # TODO rt_queue에 넣어주는 코드.
+        # PD2를 이용하여 우선순위를 게산한 후 다음과 같은 형태로 넣어주어야함
+        # heapq.heappush(self.rt_queue, (priority, rt_task))
+        pass
+
+    def push_rt_wait_queue(self, rt_task):
+        heapq.heappush(self.rt_wait_queue, (rt_task.next_period_start, rt_task))
+
+    def check_rt_tasks(self, time):
+        # TODO 데드라인 넘는 태스트는 없는지 확인?
+        # priority에 대해 정렬해야 한다면 정렬 해...
+        pass
+
+
+class SystemOriginal(System):
+    # 경성 태스크를 항상 오리지널 방식으로 수행하며, 비실시간이 들어오면 남는시간에 실행시켜주는 방식
+    # 대조군. 유전알고리즘 쓰지 않음.
+
+    def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
+        super().__init__(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks)
 
     def run(self):
-        # Set input files
-        InputUtils.set_processor(self)
-        InputUtils.set_memory(self)
-        InputUtils.set_tasks(self)
         self.setup_tasks()
 
-        # Run simulator...
-        while self.time < self.end_sim_time:
-            if self.verbose == System.V_DETAIL:
-                print(f'\ntime = {self.time}')
-                self.print_queue()
+        cur_time = 0
+        while cur_time < self.sim_time:
+            self.print_debug(cur_time)
+            self.check_new_non_rt(cur_time)
+            self.check_wait_period_queue(cur_time)
 
-            # time 부터 (time+1)동안 실행될 task 코어의 개수만큼 고르기.
-            exec_task_list = []
-            if len(self.queue) < self.CPU.n_core:
-                # 큐에 있는 것 모두 실행가능(코어의 개수보다 적으므로)
-                for tup in self.queue:
-                    exec_task_list.append(tup[1])
-                self.queue = []
-
-                # self.CPU.n_core - len(self.queue)개의 코어는 idle로 실행
-                for i in range(self.CPU.n_core - len(self.queue)):
-                    self.CPU.exec_idle(time=1)
+            exec_tasks = []
+            if len(self.rt_queue) < self.processor.n_core:
+                # non_rt_task를 실행할 수 있는 idle 존재
+                pass
             else:
-                for i in range(self.CPU.n_core):
-                    exec_task_list.append(self.pop_queue())
+                # idle 존재 X
+                pass
 
-            # for active tasks (1 unit 실행)
-            for exec_task in exec_task_list:
-                exec_task.exec_active(system=self, time=1)
+            # TODO 실행된 task의 주기 끝났는지 확인해서 끝났으면 초기화 시키고 wait으로
+            # TODO non-rt-task의 실행이 끝났다면 기록하기
 
-            # for other idle tasks (전력 소모 계산 및 1초 흐르기)
-            for i in range(len(self.queue)):
-                task = self.queue[i][1]
-                task.exec_idle(time=1, update_deadline=True)
-                self.queue[i] = (task.calc_priority(), task)
-            heapq.heapify(self.queue)  # 재정렬 필요
-            for tup in self.wait_period_queue:
-                tup[1].exec_idle(time=1, update_deadline=False)
+            cur_time += 1
+            self.check_rt_tasks(cur_time)
 
-            self.add_utilization()
-
-            # 실행된 task의 주기 끝났는지 확인해서 끝났으면 초기화 시키고 wait으로
-            for exec_task in exec_task_list:
-                if exec_task.det_remain == 0:
-                    exec_task.period_start += exec_task.period
-                    exec_task.det_remain = exec_task.det
-                    exec_task.deadline = exec_task.period
-                    self.push_wait_period_queue(exec_task)
-                else:
-                    self.push_queue(exec_task)
-
-            self.check_queued_tasks()
-            self.time += 1
-            self.check_wait_period_queue()
-
-        report = Report(self)
-        report.print_console()
-        return report
-
-    def push_wait_period_queue(self, task):
-        heapq.heappush(self.wait_period_queue, (task.period_start, task))
-
-    def push_queue(self, task):
-        heapq.heappush(self.queue, (task.calc_priority(), task))
-
-    def pop_wait_period_queue(self):
-        return heapq.heappop(self.wait_period_queue)[1]
-
-    def pop_queue(self):
-        return heapq.heappop(self.queue)[1]
-
-    def check_wait_period_queue(self):
-        # wait_queue 에 있는 task 중 새 주기가 시작되는 태스크를 queue로 이동.
-        while len(self.wait_period_queue) != 0:
-            if self.wait_period_queue[0][0] > self.time:
-                break
-            task = heapq.heappop(self.wait_period_queue)[1]
-            self.push_queue(task)
-
-    def add_utilization(self):
-        self.sum_utils += self.get_tasks_ndet()
-        self.n_utils += 1
-
-    @abstractmethod
-    def assign_task(self, task) -> bool:
-        pass
-
-    @abstractmethod
-    def reassign_task(self, task) -> bool:
-        pass
-
-    def get_tasks_ndet(self) -> float:
-        result = 0.0
-        for task in self.tasks:
-            result += float(task.det) / task.period
-        return result
-
-    def get_tasks_ndet_except(self, task_except) -> float:
-        result = 0.0
-        for task in self.tasks:
-            if task.no != task_except.no:
-                result += task.det / task.period
-        return result
-
-    def is_schedule(self, task) -> bool:
-        if self.get_tasks_ndet_except(task) + (task.det / task.period) <= self.CPU.n_core:
-            return True
-        return False
-
-    def setup_tasks(self) -> bool:
-        for task in self.tasks:
-            if not self.assign_task(task):
-                raise Exception(task.no + ": insufficient memory")
-            task.calc_det()
-            if not self.is_schedule(task):
-                raise Exception(task.no + ": unschedule task")
-            self.push_queue(task)
-        return True
-
-    def check_queued_tasks(self):
-        for task in self.tasks:
-            task.check_task()
-
-    @staticmethod
-    def error(self, message: str):
-        print(message)
-        sys.exit()
-
-    def print_queue(self):
-        temp = []
-        print("-----------queue------------")
-        while len(self.queue) > 0:
-            tup = heapq.heappop(self.queue)
-            print(tup[1].desc_task())
-            temp.append(tup)
-        print("---------queue end-----------")
-        heapq.heapify(temp)
-        self.queue = temp
+        self.print_final_report()
 
 
-class Dram(System):
-    def __init__(self, end_sim_time: int, verbose: int):
-        super().__init__(end_sim_time, verbose)
-        self.name = "DRAM"
-        self.desc = "No DVFS with dram(dram)"
-        self.CPU = NoneDVFSCPU()
+class SystemGA(System):
+    # 대기중인 non-rt-task가 존재하면 Original과 같은 방식으로 실행.
+    # 존재하지 않는다면 유전 알고리즘 결과를 이용하여 실행.
 
-    def assign_task(self, task) -> bool:
-        self.CPU.assign_cpu_frequency(task)
-        return self.memories.assign_memory(task, Memory.TYPE_DRAM)
-
-    def reassign_task(self, task) -> bool:
-        return self.CPU.reassign_cpu_frequency(task, self)
-
-
-class Hm(System):
-    def __init__(self, end_sim_time: int, verbose: int):
-        super().__init__(end_sim_time, verbose)
-        self.name = "HM"
-        self.desc = "Hybrid memory(hm)"
-        self.CPU = NoneDVFSCPU()
-
-    def assign_task(self, task) -> bool:
-        self.CPU.assign_cpu_frequency(task)
-
-        mem_types = [Memory.TYPE_DRAM, Memory.TYPE_LPM]
-        for mem_type in mem_types:
-            if self.memories.assign_memory(task, mem_type):
-                return True
-        return False
-
-    def reassign_task(self, task) -> bool:
-        self.CPU.reassign_cpu_frequency(task, self)
-
-        task.revoke_memory()
-
-        mem_types = [Memory.TYPE_LPM, Memory.TYPE_DRAM]
-        for mem_type in mem_types:
-            if self.memories.assign_memory(task, mem_type):
-                task.calc_det()
-                if self.is_schedule(task):
-                    return True
-                task.revert_det()
-        return False
-
-
-class DvfsDram(System):
-    def __init__(self, end_sim_time: int, verbose: int):
-        super().__init__(end_sim_time, verbose)
-        self.name = "DVFS_DRAM"
-        self.desc = "DVFS with dram(dvfs-dram)"
-        self.CPU = DVFSCPU()
-
-    def assign_task(self, task) -> bool:
-        self.CPU.assign_cpu_frequency(task)
-        if not self.memories.assign_memory(task, Memory.TYPE_DRAM):
-            return False
-        return True
-
-    def reassign_task(self, task) -> bool:
-        return self.CPU.reassign_cpu_frequency(task, self)
-
-
-class DvfsHm(System):
-    def __init__(self, end_sim_time: int, verbose: int):
-        super().__init__(end_sim_time, verbose)
-        self.name = "DVFS_HM"
-        self.desc = "DVFS with hybrid memory(dvs-hm)"
-        self.CPU = DVFSCPU()
-
-    def assign_task(self, task) -> bool:
-        self.CPU.assign_cpu_frequency(task)
-
-        mem_types = [Memory.TYPE_DRAM, Memory.TYPE_LPM]
-        for mem_type in mem_types:
-            if self.memories.assign_memory(task, mem_type):
-                return True
-        return False
-
-    def reassign_task(self, task) -> bool:
-        task.revoke_memory()
-
-        mem_types = [Memory.TYPE_LPM, Memory.TYPE_DRAM]
-        for mem_type in mem_types:
-            if self.memories.assign_memory(task, mem_type):
-                if self.CPU.reassign_cpu_frequency(task, self):
-                    return True
-                task.revoke_memory()
-        return False
-
-
-class RT_GA(System):
-    def __init__(self, end_sim_time: int, verbose: int):
-        super().__init__(end_sim_time, verbose)
-        self.name = "GA(Fixed)"
-        self.desc = "Mode for GA"
-        self.CPU = DVFSCPU()
-        self.assigned_CPU = []
-        self.assigned_MEM = []
+    def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
+        super().__init__(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks)
 
     def run(self):
-        # Set input files
-        InputUtils.set_processor(self)
-        InputUtils.set_memory(self)
-        InputUtils.set_tasks(self)
-        InputUtils.set_GA(self)
         self.setup_tasks()
 
-        # Run simulator...
-        while self.time < self.end_sim_time:
-            if self.verbose == System.V_DETAIL:
-                print(f'\ntime = {self.time}')
-                self.print_queue()
+        cur_time = 0
+        while cur_time < self.sim_time:
+            self.print_debug(cur_time)
+            self.check_new_non_rt(cur_time)
+            self.check_wait_period_queue(cur_time)
 
-            # time 부터 (time+1)동안 실행될 task 코어의 개수만큼 고르기.
-            exec_task_list = []
-            if len(self.queue) < self.CPU.n_core:
-                # 큐에 있는 것 모두 실행가능(코어의 개수보다 적으므로)
-                for tup in self.queue:
-                    exec_task_list.append(tup[1])
-                self.queue = []
-
-                # self.CPU.n_core - len(self.queue)개의 코어는 idle로 실행
-                for i in range(self.CPU.n_core - len(self.queue)):
-                    self.CPU.exec_idle(time=1)
+            if len(self.non_rt_queue) == 0:
+                # 수행 대기중인 non-rt-tasks가 없다면 유전알고리즘으로 수행
+                pass
             else:
-                for i in range(self.CPU.n_core):
-                    exec_task_list.append(self.pop_queue())
+                # 수행 대기중인 non-rt-tasks가 잇다면 original로..?
+                pass
 
-            # for active tasks (1 unit 실행)
-            for exec_task in exec_task_list:
-                exec_task.exec_active(system=self, time=1)
+            # TODO 실행된 task의 주기 끝났는지 확인해서 끝났으면 초기화 시키고 wait으로
+            # TODO non-rt-task의 실행이 끝났다면 기록하기
 
-            # for other idle tasks (전력 소모 계산 및 1초 흐르기)
-            for i in range(len(self.queue)):
-                task = self.queue[i][1]
-                task.exec_idle(time=1, update_deadline=True)
-                self.queue[i] = (task.calc_priority(), task)
-            heapq.heapify(self.queue)  # 재정렬 필요
-            for tup in self.wait_period_queue:
-                tup[1].exec_idle(time=1, update_deadline=False)
+            cur_time += 1
+            self.check_rt_tasks(cur_time)
 
-            self.add_utilization()
-
-            # 실행된 task의 주기 끝났는지 확인해서 끝났으면 초기화 시키고 wait으로
-            for exec_task in exec_task_list:
-                if exec_task.det_remain == 0:
-                    exec_task.period_start += exec_task.period
-                    exec_task.det_remain = exec_task.det
-                    exec_task.deadline = exec_task.period
-                    self.push_wait_period_queue(exec_task)
-                else:
-                    self.push_queue(exec_task)
-
-            self.check_queued_tasks()
-            self.time += 1
-            self.check_wait_period_queue()
-
-        report = Report(self)
-        report.print_console()
-        return report
-
-    def setup_tasks(self) -> bool:
-        for i in range(len(self.tasks)):
-            task = self.tasks[i]
-
-            # Set cpu
-            task.cpu_frequency = self.CPU.frequencies[self.assigned_CPU[i]]
-
-            # Set memory
-            memory = self.memories.list[self.assigned_MEM[i]]
-            task.memory = memory
-            memory.used_capacity += task.memory_req
-
-            task.calc_det()
-            if not self.is_schedule(task):
-                raise Exception(task.no + ": unschedule task")
-            self.push_queue(task)
-
-        # Check memory
-        if not self.memories.check_memory():
-            raise Exception(task.no + ": need more memory")
-        return True
-
-    def assign_task(self, task) -> bool:
-        pass
-
-    def reassign_task(self, task) -> bool:
-        pass
+        self.print_final_report()

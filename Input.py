@@ -4,7 +4,7 @@ import sys
 from Processor import Processor
 
 
-def get_processor_and_memory(input_file="input_configuration.txt"):
+def get_configuration(input_file="input_configuration.txt"):
     try:
         processor = None
         memories = None
@@ -21,9 +21,13 @@ def get_processor_and_memory(input_file="input_configuration.txt"):
                         memories = get_memory(f)
                     elif line[1] == 'Processor':
                         processor = get_processor(f)
+                    elif line[1] == 'Simulation':
+                        sim_time, verbose = get_sim_time_and_verbose(f)
+                    else:
+                        raise Exception
 
         assert processor, memories
-        return processor, memories
+        return sim_time, verbose, processor, memories
 
     except FileNotFoundError:
         print("Cannot find {}".format(input_file))
@@ -50,13 +54,19 @@ def get_memory(f):
     return memories
 
 
+def get_sim_time_and_verbose(f):
+    sim_time = int(f.readline().split()[1])
+    verbose = int(f.readline().split()[1])
+    return sim_time, verbose
+
+
 def get_rt_tasks(input_file="input_rt_tasks.txt"):
     try:
         rt_tasks = []
         with open(input_file, "r", encoding='UTF-8') as f:
             for i in range(int(f.readline())):
                 line = f.readline().split()
-                rt_tasks.append(RTTask(i+1, *map(int, line[:3]), float(line[3])))
+                rt_tasks.append(RTTask(i + 1, *map(int, line[:3]), float(line[3])))
 
         return rt_tasks
 

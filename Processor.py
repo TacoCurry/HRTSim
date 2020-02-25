@@ -28,3 +28,7 @@ class Processor:
 
     def add_power_consumed_active(self, power):
         self.power_consumed_active += power
+
+    def init(self):
+        self.power_consumed_idle = 0
+        self.power_consumed_active = 0
