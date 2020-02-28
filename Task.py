@@ -26,6 +26,11 @@ class RTTask:
         self.deadline = None  # 이번 주기의 데드라인을 시간에 대한 절대적 값으로 저장
         self.next_period_start = 0  # 다음 주기의 시작을 저장
 
+    # 변수 반환 디버그용
+    def desc_task(self) -> str:
+        return (f'    [no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
+                f'det:{self.det}, det_mode:{self.det_mode}, deadline:{self.deadline}]')
+
     def __lt__(self, other):
         # PD2 우선순위 구
         pass
@@ -43,6 +48,7 @@ class RTTask:
         self.deadline = self.next_period_start
         self.next_period_start += self.period
 
+
     def calc_d_for_pd2(self):
         # TODO PD2에서 사용되는 d 계산하는 식 필요
         pass
@@ -56,7 +62,9 @@ class RTTask:
         pass
 
     def is_deadline_violated(self, cur_time):
-        return self.deadline <= cur_time
+        if self.deadline <= cur_time:
+            raise Exception(self.desc_task() + ": deadline failure")
+        return True
 
     def is_finish(self):
         return self.i >= self.det + 1
@@ -119,6 +127,8 @@ class RTTask:
         self.calc_b_for_pd2()
         self.calc_D_for_pd2()
         self.calc_d_for_pd2()
+
+
 
 
 class NonRTTask:

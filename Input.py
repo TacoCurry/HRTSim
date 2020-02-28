@@ -81,8 +81,8 @@ def get_non_rt_tasks(input_file="input_nonrt_tasks.txt"):
         with open(input_file, "r", encoding='UTF-8') as f:
             for i in range(int(f.readline())):
                 line = f.readline().split()
-                # TODO NoneRTTTask의 memory 관련 정보도 받도록 수정해야해요.
-                non_rt_tasks.append(NonRTTask(i + 1, *map(int, line)))
+                # NoneRTTTask의 memory 관련 정보도 받도록 수정
+                non_rt_tasks.append(NonRTTask(i + 1, *map(int, line[:3]), float(line[3])))
 
         return non_rt_tasks
 
