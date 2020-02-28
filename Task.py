@@ -28,6 +28,11 @@ class RTTask:
         self.deadline = None  # 이번 주기의 데드라인을 시간에 대한 절대적 값으로 저장
         self.next_period_start = 0  # 다음 주기의 시작을 저장
 
+    # 변수 반환 디버그용
+    def desc_task(self) -> str:
+        return (f'    [no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
+                f'det:{self.det}, det_mode:{self.det_mode}, deadline:{self.deadline}]')
+
     def __lt__(self, other):
         if self.d == other.d:
             if self.b == other.b == 1:
@@ -73,6 +78,7 @@ class RTTask:
         self.deadline = self.next_period_start
         self.next_period_start += self.period
 
+
     def calc_d_for_pd2(self):
         self.d = math.ceil(self.i / (self.det / self.period))
 
@@ -85,7 +91,9 @@ class RTTask:
         self.D = math.ceil(math.ceil(math.ceil(self.d) * (1 - self.det / self.period)) / (1 - self.det / self.period))
 
     def is_deadline_violated(self, cur_time):
-        return self.deadline <= cur_time
+        if self.deadline <= cur_time:
+            raise Exception(self.desc_task() + ": deadline failure")
+        return True
 
     def is_finish(self):
         return self.i >= self.det + 1
@@ -133,6 +141,8 @@ class RTTask:
         self.calc_d_for_pd2()
         self.calc_b_for_pd2()
         self.calc_D_for_pd2()
+
+
 
 
 class NonRTTask:
