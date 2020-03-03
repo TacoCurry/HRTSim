@@ -51,7 +51,8 @@ class System(metaclass=ABCMeta):
         print("===========the end===========")
 
     def check_new_non_rt(self, cur_time):
-        if self.non_rt_tasks_pointer < len(self.non_rt_tasks) and self.non_rt_tasks[self.non_rt_tasks_pointer] == cur_time:
+        if self.non_rt_tasks_pointer < len(self.non_rt_tasks) and \
+                self.non_rt_tasks[self.non_rt_tasks_pointer] == cur_time:
             self.non_rt_queue.append(self.non_rt_tasks[self.non_rt_tasks_pointer])
             self.non_rt_tasks_pointer += 1
 
@@ -76,14 +77,8 @@ class System(metaclass=ABCMeta):
         heapq.heappush(self.rt_wait_queue, (rt_task.next_period_start, rt_task))
 
     def check_rt_tasks(self, cur_time):
-        # 데드라인 넘는 태스트는 없는지 확인? 있으면 에러
         for rt_task in self.rt_tasks:
             rt_task.is_deadline_violated(cur_time)
-
-    def setup_tasks(self):
-        # 시뮬레이션 시작 전 태스크 셋팅하는 코드
-        for rt_task in self.rt_tasks:
-            self.push_rt_wait_queue(rt_task)
 
     def get_tasks_ndet(self) -> float:
         result = 0.0

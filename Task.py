@@ -78,7 +78,6 @@ class RTTask:
         self.deadline = self.next_period_start
         self.next_period_start += self.period
 
-
     def calc_d_for_pd2(self):
         self.d = math.ceil(self.i / (self.det / self.period))
 
@@ -141,8 +140,6 @@ class RTTask:
         self.calc_d_for_pd2()
         self.calc_b_for_pd2()
         self.calc_D_for_pd2()
-
-
 
 
 class NonRTTask:

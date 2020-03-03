@@ -17,11 +17,11 @@ class Processor:
     def insert_processor_mode(self, wcet_scale, power_active, power_idle):
         self.modes.append(ProcessorMode(wcet_scale, power_active, power_idle))
 
-    def exec_idle_with_dvfs(self, time):
-        self.power_consumed_idle += time * self.modes[-1].power_idle
+    def exec_idle_with_dvfs(self, quantum=1):
+        self.power_consumed_idle += quantum * self.modes[-1].power_idle
 
-    def exec_idle_without_dvfs(self, time):
-        self.power_consumed_idle += time * self.modes[0].power_idle
+    def exec_idle_without_dvfs(self, quantum=1):
+        self.power_consumed_idle += quantum * self.modes[0].power_idle
 
     def add_power_consumed_idle(self, power):
         self.power_consumed_idle += power
