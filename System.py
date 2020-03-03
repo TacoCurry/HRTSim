@@ -28,7 +28,7 @@ class System(metaclass=ABCMeta):
         # 그냥 리스트 (우선순위 큐 아님)
         self.non_rt_queue = []
 
-        # 시작시간 오름차순 -> 매 시간마다 확인 필요. 맨앞의 태스크만 확인하면 된다.
+        # 시작시간(at) 오름차순 -> 매 시간마다 확인 필요. 맨앞의 태스크만 확인하면 된다.
         self.non_rt_tasks_pointer = 0
 
     def print_debug(self, time):
@@ -84,3 +84,13 @@ class System(metaclass=ABCMeta):
         # 시뮬레이션 시작 전 태스크 셋팅하는 코드
         for rt_task in self.rt_tasks:
             self.push_rt_wait_queue(rt_task)
+
+    def get_tasks_ndet(self) -> float:
+        result = 0.0
+        for rt_task in self.rt_tasks:
+            result += float(rt_task.det) / rt_task.period
+        return result
+
+    def add_utilization(self):
+        self.sum_utils += self.get_tasks_ndet()
+        self.n_utils += 1

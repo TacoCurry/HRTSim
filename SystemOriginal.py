@@ -20,15 +20,36 @@ class SystemOriginal(System):
             self.check_wait_period_queue(cur_time)  # 새롭게 주기 시작하는 job이 있는지 확인
 
             exec_tasks = []
-            if len(self.rt_queue) < self.processor.n_core:
-                # non_rt_task를 실행할 수 있는 idle time 존재
-                pass
-            else:
-                # idle 존재 X
-                pass
 
-            # TODO 실행된 task의 주기 끝났는지 확인해서 끝났으면 초기화 시키고 wait으로
-            # TODO non-rt-task의 실행이 끝났다면 end_time 등을 기록하기
+            if len(self.rt_queue) < self.processor.n_core:
+                # 큐에 있는 것 모두 실행가능(코어의 개수보다 적으므로)
+                for tup in self.rt_queue:
+                    exec_tasks.append(tup[1])
+                self.rt_queue = []
+
+                if len(self.non_rt_queue) == 0:
+                # 비 실시간 없는 경우: self.processor.n_core - len(self.queue)개의 코어는 idle로 실행
+                    for i in range(self.processor.n_core - len(self.rt_queue)):
+                        self.CPU.exec_idle(time=1)
+                else:
+                    # 비실시간 있는 경우
+                    for i in range(self.processor.n_core - len(self.rt_queue)):
+                       # 비실시간 오리지널로 수행
+                    pass
+
+            else:
+                for i in range(self.CPU.n_core):
+                    exec_tasks.append(self.pop_queue())
+
+            # for active rt tasks (1 quantum 실행)
+            for exec_task in exec_tasks:
+                exec_task.mode = 'O'
+                exec_task.exec_active()
+
+
+            # TODO 실행된 rt-task의 주기 끝났는지 확인해서 끝났으면 초기화 시키고 wait으로
+
+            # TODO non-rt-task의 실행이 끝났다면( bt == exec time)  end_time 등을 기록하기
 
             cur_time += 1
             self.check_rt_tasks(cur_time)
