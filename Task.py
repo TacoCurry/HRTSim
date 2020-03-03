@@ -156,7 +156,7 @@ class NonRTTask:
         self.start_time = None
         self.end_time = None
 
-    def exec_active(self, processor, memories, quantum, cur_time):
+    def exec_active(self, processor, memories, cur_time, quantum=1):
         # Non-RT-Task는 항상 Original로 실행
         processor_mode = processor.modes[0]
         processor.add_power_consumed_active(quantum * processor_mode.power_active * 0.5)
@@ -170,7 +170,7 @@ class NonRTTask:
             self.start_time = cur_time
         self.exec_time += quantum
 
-    def exec_idle(self, memories, quantum):
+    def exec_idle(self, memories, quantum=1):
         # Non-RT-Task는 항상 Original로 실행
         memory = memories.list[0]  # DRAM
         memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle

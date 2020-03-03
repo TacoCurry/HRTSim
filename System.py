@@ -1,5 +1,6 @@
 from abc import *
 import heapq
+from collections import deque
 
 
 class System(metaclass=ABCMeta):
@@ -16,6 +17,7 @@ class System(metaclass=ABCMeta):
 
         self.rt_tasks = rt_tasks
         self.non_rt_tasks = non_rt_tasks
+        self.non_rt_tasks_pointer = 0  # 시작시간(at) 오름차순이기 때문에 pointer가 가리키는 태스크만 매 시간 확인하면 된다.
 
         # 현재 주기안에서 실행 대기중인 rt-task가 담김
         # 원소는 (PD2를 이용한 우선순위, 태스크 인스턴스)로 담아서 우선순위 큐로 구현
@@ -25,11 +27,11 @@ class System(metaclass=ABCMeta):
         # 원소는 (다음 주기 시작시간, 태스크 인스턴스)로 담아서 주기 시작시간에 대한 우선순위 큐로 구현
         self.rt_wait_queue = []
 
-        # 그냥 리스트 (우선순위 큐 아님)
-        self.non_rt_queue = []
+        # 실행 대기중인 non-rt-task가 담김
+        self.non_rt_queue = deque()
 
-        # 시작시간(at) 오름차순 -> 매 시간마다 확인 필요. 맨앞의 태스크만 확인하면 된다.
-        self.non_rt_tasks_pointer = 0
+        # 시뮬레이션 결과를 위해 유지
+        self.sum_utils = 0
 
     def print_debug(self, time):
         # 디버그를 위해 rt_queue와 non_rt_queue 출력
@@ -68,6 +70,7 @@ class System(metaclass=ABCMeta):
 
     def print_final_report(self):
         # TODO 최종 결과 출력하는 코드
+        avg_cpu_util = self.sum_utils / self.sim_time
         pass
 
     def push_rt_queue(self, rt_task):
@@ -80,12 +83,5 @@ class System(metaclass=ABCMeta):
         for rt_task in self.rt_tasks:
             rt_task.is_deadline_violated(cur_time)
 
-    def get_tasks_ndet(self) -> float:
-        result = 0.0
-        for rt_task in self.rt_tasks:
-            result += float(rt_task.det) / rt_task.period
-        return result
-
-    def add_utilization(self):
-        self.sum_utils += self.get_tasks_ndet()
-        self.n_utils += 1
+    def add_cpu_utilization(self, util):
+        self.sum_utils += util
