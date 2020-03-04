@@ -51,7 +51,7 @@ class System(metaclass=ABCMeta):
 
     def check_new_non_rt(self, cur_time):
         if self.non_rt_tasks_pointer < len(self.non_rt_tasks) and \
-                self.non_rt_tasks[self.non_rt_tasks_pointer] == cur_time:
+                self.non_rt_tasks[self.non_rt_tasks_pointer].at == cur_time:
             self.non_rt_queue.append(self.non_rt_tasks[self.non_rt_tasks_pointer])
             self.non_rt_tasks_pointer += 1
 
