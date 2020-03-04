@@ -16,6 +16,8 @@ def get_configuration(input_file="input_configuration.txt"):
                     break  # EOF
 
                 line = line.split()
+                if len(line) == 0:
+                    continue
                 if line[0] == '##':
                     if line[1] == 'Memory':
                         memories = get_memory(f)
@@ -50,7 +52,7 @@ def get_memory(f):
         line = f.readline().split()
         if len(line) == 0:
             break
-        memories.insert_memory(str(line[0]), int(line[1]), *map(float, line[2:]))
+        memories.insert_memory(int(line[1]), *map(float, line[2:]))
     return memories
 
 
@@ -90,11 +92,11 @@ def get_non_rt_tasks(input_file="input_nonrt_tasks.txt"):
         sys.exit(0)
 
 
-def set_ga_results(rt_tasks, input_file="input_ga_results.txt"):
+def set_ga_results(rt_tasks, input_file="input_ga_result.txt"):
     try:
         with open(input_file, "r", encoding='UTF8') as f:
             for task in rt_tasks:
-                line = map(int, f.readline().split())
+                line = list(map(int, f.readline().split()))
                 task.ga_processor_mode = line[0]
                 task.ga_memory_mode = line[1]
 

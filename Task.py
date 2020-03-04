@@ -42,7 +42,7 @@ class RTTask:
 
     def set_exec_mode(self, mode, processor, memories):
         # 'G(GA)' 혹은 'O(Original)'로 실행 모드를 변경하고 det도 다시 계산.
-        processor_mode = processor[self.ga_processor_mode]
+        processor_mode = processor.modes[self.ga_processor_mode]
         memory = memories.list[self.ga_memory_mode]
 
         if mode == 'G':
@@ -143,13 +143,13 @@ class RTTask:
 
 
 class NonRTTask:
-    def __init__(self, no, at, bt):
+    def __init__(self, no, at, bt, mem_req, mem_active_ratio):
         # 태스크 정보
         self.no = no
         self.at = at
         self.bt = bt
-        self.memory_req = None
-        self.memory_active_ratio = None
+        self.memory_req = mem_req
+        self.memory_active_ratio = mem_active_ratio
 
         # 시뮬레이션 및 결과 출력을 위해 유지하는 정보
         self.exec_time = 0

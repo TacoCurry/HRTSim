@@ -8,6 +8,7 @@ from Input import *
 sim_time, verbose, processor, memories = get_configuration()
 rt_tasks = get_rt_tasks()
 non_rt_tasks = get_non_rt_tasks()
+set_ga_results(rt_tasks)
 
 SystemOriginal(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).run()
 
@@ -15,6 +16,7 @@ SystemOriginal(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).r
 sim_time, verbose, processor, memories = get_configuration()
 rt_tasks = get_rt_tasks()
 non_rt_tasks = get_non_rt_tasks()
+set_ga_results(rt_tasks)
 
 SystemGA(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).run()
 
@@ -22,6 +24,7 @@ SystemGA(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).run()
 sim_time, verbose, processor, memories = get_configuration()
 rt_tasks = get_rt_tasks()
 non_rt_tasks = get_non_rt_tasks()
+set_ga_results(rt_tasks)
 
 SystemIGA(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).run()
 
