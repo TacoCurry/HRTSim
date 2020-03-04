@@ -68,7 +68,7 @@ class SystemOriginal(System):
                 non_exec_rt_task.exec_idle(self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
 
             # for active rt-tasks
-            if self.verbose != System.VERBOSE_SIMPLE:
+            if len(rt_exec_tasks) > 0 and self.verbose != System.VERBOSE_SIMPLE:
                 print("{}~{} quantum, RT-Task {} 실행함".format(cur_time, cur_time + 1,
                                                              ",".join(map(lambda task: str(task.no), rt_exec_tasks))))
             for rt_task in rt_exec_tasks:
