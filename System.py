@@ -34,23 +34,20 @@ class System(metaclass=ABCMeta):
         self.sum_utils = 0
 
     def print_debug(self, time):
-        # 디버그를 위해 rt_queue와 non_rt_queue 출력
-        print("current time: {}".format(time))
-
         temp_queue = []
         print("==========rt_queue===========")
         while len(self.rt_queue) > 0:
             rt_task = heapq.heappop(self.rt_queue)
             print(rt_task.desc_task())
             temp_queue.append(rt_task)
-        print("===========the end===========")
+        print("========rt_queue_end=========")
         heapq.heapify(temp_queue)
         self.rt_queue = temp_queue
 
         print("==========non_rt_queue===========")
         for non_rt_task in self.non_rt_tasks:
             non_rt_task.desc_task()
-        print("===========the end===========")
+        print("=======  non_rt_queue end==========")
 
     def check_new_non_rt(self, cur_time):
         if self.non_rt_tasks_pointer < len(self.non_rt_tasks) and \

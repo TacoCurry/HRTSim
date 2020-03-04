@@ -28,10 +28,9 @@ class RTTask:
         self.deadline = None  # 이번 주기의 데드라인을 시간에 대한 절대적 값으로 저장
         self.next_period_start = 0  # 다음 주기의 시작을 저장
 
-    # 변수 반환 디버그용
     def desc_task(self) -> str:
-        return (f'    [no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
-                f'det:{self.det}, det_mode:{self.det_mode}, deadline:{self.deadline}]')
+        return (f'    [type:RT, no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
+                f'det:{self.det}, exec_mode:{self.exec_mode}, deadline:{self.deadline}]')
 
     def __lt__(self, other):
         if self.d == other.d:
@@ -75,16 +74,16 @@ class RTTask:
     def init_job(self):
         # 매 주기의 시작에 실행됨(매 job 마다 실행됨)
         self.i = 1
-        self.deadline = self.next_period_start
         self.next_period_start += self.period
+        self.deadline = self.next_period_start
 
     def calc_d_for_pd2(self):
         self.d = math.ceil(self.i / (self.det / self.period))
 
     def calc_b_for_pd2(self):
         if abs(self.d - self.i / (self.det / self.period)) <= RTTask.EPS:
-            return 0
-        return 1
+            self.b = 0
+        self.b = 1
 
     def calc_D_for_pd2(self):
         self.D = math.ceil(math.ceil(math.ceil(self.d) * (1 - self.det / self.period)) / (1 - self.det / self.period))
@@ -155,6 +154,10 @@ class NonRTTask:
         self.exec_time = 0
         self.start_time = None
         self.end_time = None
+
+    def desc_task(self) -> str:
+        return (f'    [type:None-RT, no:{self.no}, at:{self.at}, bt:{self.bt}, ' +
+                f'exec_time:{self.exec_time}, start_time:{self.start_time}]')
 
     def exec_active(self, processor, memories, cur_time, quantum=1):
         # Non-RT-Task는 항상 Original로 실행

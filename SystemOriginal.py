@@ -18,6 +18,8 @@ class SystemOriginal(System):
 
         cur_time = 0
         while cur_time < self.sim_time:
+            if self.verbose != System.VERBOSE_SIMPLE:
+                print("\ncurrent time: {}".format(cur_time))
             if self.verbose == System.VERBOSE_DEBUG_HARD:
                 self.print_debug(cur_time)
 
@@ -62,7 +64,7 @@ class SystemOriginal(System):
             # for other non-active rt-tasks (이번 주기에 실행이 안되더라도 메모리는 차지하고 있으므로)
             for non_exec_rt_task in self.rt_queue:
                 non_exec_rt_task.exec_idle(self.memories)
-            for non_exec_rt_task in self.rt_wait_queue:
+            for (_, non_exec_rt_task) in self.rt_wait_queue:
                 non_exec_rt_task.exec_idle(self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
 
             # for active rt-tasks
@@ -85,7 +87,7 @@ class SystemOriginal(System):
                 non_exec_non_rt_task.exec_idle(self.memories)
 
             # for active non-rt-tasks
-            if self.verbose != System.VERBOSE_SIMPLE:
+            if len(non_rt_exec_tasks) > 0 and self.verbose != System.VERBOSE_SIMPLE:
                 print("{}~{} quantum, Non-RT-Task {} 실행함".format(cur_time, cur_time + 1,
                                                                  ",".join(map(lambda task: str(task.no),
                                                                               non_rt_exec_tasks))))
