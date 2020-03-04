@@ -71,11 +71,16 @@ class RTTask:
         self.calc_D_for_pd2()
         self.calc_b_for_pd2()
 
+    def set_job(self):
+        # run 하기 전 한번만 실행됨
+        self.i = 1
+        self.deadline = self.next_period_start = self.period
+
     def init_job(self):
         # 매 주기의 시작에 실행됨(매 job 마다 실행됨)
         self.i = 1
-        self.next_period_start += self.period
-        self.deadline = self.next_period_start
+        self.next_period_start = self.deadline
+        self.deadline += self.period
 
     def calc_d_for_pd2(self):
         self.d = math.ceil(self.i / (self.det / self.period))
