@@ -1,96 +1,187 @@
-class Task:
-    def __init__(self, no: int, wcet, period, mem_req, mem_active_ratio, cpu):
+import math
+
+
+class RTTask:
+    EPS = 1e-6  # 부동 소수점 비교 연산을 위해 사용
+
+    def __init__(self, no, wcet, period, mem_req, mem_active_ratio):
+        # 태스크 정보
+        self.no = no
         self.wcet = wcet
-        self.period = self.deadline = period
+        self.period = period
         self.memory_req = mem_req
         self.memory_active_ratio = mem_active_ratio
-        self.no = no
 
-        self.cpu = cpu
-        self.cpu_frequency = None
-        self.memory = None
+        # ga의 결과로 할당된 모드 정보를 저장.
+        self.ga_processor_mode = None
+        self.ga_memory_mode = None
 
-        self.det = 0
-        self.det_remain = 0
-        self.det_old = None
-        self.det_remain_old = None
+        # DVFS 및 HM의 적용으로 변화하는 wcet를 저장함.
+        self.det = None
+        self.exec_mode = None  # 'O'(Original) 혹은 'G'(GA)로 현재 실행모드를 저장함.
 
-        self.period_start = 0
-        self.prev_exec_time = None
+        # PD2 알고리즘을 위해 유지하는 정보.
+        # i가 변경될 때만 새로 계산해주면 됨.
+        self.i = self.d = self.b = self.D = None
 
-    def __lt__(self, other):
-        return self.no < other.no
-
-    def calc_priority(self) -> float:
-        # min heap 사용을 위해 역수로 계산.
-        return float(self.deadline)/self.det_remain
-
-    def calc_det(self):
-        new_det = self.wcet / min(self.cpu_frequency.wcet_scale, self.memory.wcet_scale)
-
-        self.det_old = self.det
-        self.det = int(round(new_det))
-        if self.det == 0:
-            self.det = 1
-
-        self.det_remain_old = self.det_remain
-        if not self.det_remain:
-            self.det_remain = self.det
-        elif self.det_remain > 0 & self.det != self.det_old:
-            self.det_remain = int(round(self.det_remain * (new_det / self.det_old)))
-
-    def revert_det(self):
-        self.det = self.det_old
-        self.det_remain = self.det_remain_old
+        # 시뮬레이션을 위해 유지하는 정보
+        self.deadline = None  # 이번 주기의 데드라인을 시간에 대한 절대적 값으로 저장
+        self.next_period_start = 0  # 다음 주기의 시작을 저장
 
     def desc_task(self) -> str:
-        return (f'    [no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
-                f'cpu_freq(scale):{self.cpu_frequency.wcet_scale}, memory:{self.memory.type}, ' +
-                f'det:{self.det}, det_remain:{self.det_remain}, deadline:{self.deadline}]')
+        return (f'    [type:RT, no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
+                f'det:{self.det}, exec_mode:{self.exec_mode}, deadline:{self.deadline}]')
 
-    def check_task(self):
-        if self.det == 0:
-            raise Exception(self.desc_task()+": zero det.")
-        if self.det < self.det_remain:
-            raise Exception(self.desc_task() + ": invalid det.")
-        if self.deadline < 0:
-            raise Exception(self.desc_task() + ": negative deadline")
+    def __lt__(self, other):
+        if self.d == other.d:
+            if self.b == other.b == 1:
+                return self.D >= other.D
+            return self.b > other.b
+        return self.d < other.d
+
+    def set_exec_mode(self, mode, processor, memories):
+        # 'G(GA)' 혹은 'O(Original)'로 실행 모드를 변경하고 det도 다시 계산.
+        processor_mode = processor.modes[self.ga_processor_mode]
+        memory = memories.list[self.ga_memory_mode]
+
+        if mode == 'G':
+            if not self.exec_mode or self.i == 1:
+                self.det = self.wcet / min(processor_mode.wcet_scale, memory.wcet_scale)
+
+            if self.exec_mode == 'O':
+                det_executed = self.i + 1
+                det_remain = self.det - det_executed
+                changed_det_remain = det_remain / min(processor_mode.wcet_scale, memory.wcet_scale)
+                self.det = round(det_executed + changed_det_remain)
+
+        else:  # mode == 'O'
+            if not self.exec_mode or self.i == 1:
+                self.det = self.wcet
+
+            if self.exec_mode == 'G':
+                det_executed = self.i + 1
+                det_remain = self.det - det_executed
+                changed_det_remain = det_remain * min(processor_mode.wcet_scale, memory.wcet_scale)
+                self.det = round(det_executed + changed_det_remain)
+
+        self.exec_mode = mode
+
+        # task의 weight이 변경되었으므로 다시 계산해야함.
+        self.calc_d_for_pd2()
+        self.calc_D_for_pd2()
+        self.calc_b_for_pd2()
+
+    def set_job(self):
+        # run 하기 전 한번만 실행됨
+        self.i = 1
+        self.deadline = self.next_period_start = self.period
+
+    def init_job(self):
+        # 매 주기의 시작에 실행됨(매 job 마다 실행됨)
+        self.i = 1
+        self.next_period_start = self.deadline
+        self.deadline += self.period
+
+    def calc_d_for_pd2(self):
+        self.d = math.ceil(self.i / (self.det / self.period))
+
+    def calc_b_for_pd2(self):
+        if abs(self.d - self.i / (self.det / self.period)) <= RTTask.EPS:
+            self.b = 0
+        self.b = 1
+
+    def calc_D_for_pd2(self):
+        self.D = math.ceil(math.ceil(math.ceil(self.d) * (1 - self.det / self.period)) / (1 - self.det / self.period))
+
+    def is_deadline_violated(self, cur_time):
+        if self.deadline <= cur_time:
+            raise Exception(self.desc_task() + ": deadline failure")
         return True
 
-    def revoke_memory(self):
-        self.memory.used_capacity -= self.memory_req
-        self.memory = None
+    def is_finish(self):
+        return self.i >= self.det + 1
 
-    def exec_idle(self, time: int, update_deadline: bool):
-        self.memory.power_consumed_idle += time * self.memory_req * self.memory.power_idle
-        if update_deadline:
-            self.deadline -= 1
+    def exec_idle(self, memories, quantum=1):
+        if self.exec_mode == 'O':
+            # 오리지널 자원을 이용하여 quantum 만큼 task를 idle로 실행
+            memory = memories.list[0]  # DRAM
+            memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle
+        else:  # exec_mode == 'G'
+            # ga의 결과로 할당된 자원을 이용하여 quantum 만큼 task를 idle로 실행
+            memory = memories.list[self.ga_memory_mode]
+            memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle
 
-    def exec_active(self, time: int, system):
-        if not self.prev_exec_time:
-            pass
-        elif self.prev_exec_time != system.time - 1:
-            # 새로 수행되는 태스크일 때만 cpu와 메모리 다시 할당
-            system.reassign_task(self)
+    def exec_active(self, processor, memories, quantum=1):
+        if self.exec_mode == 'O':
+            # 오리지널 자원을 이용하여 quantum 만큼 task를 active로 실행
+            processor_mode = processor.modes[0]
+            processor.add_power_consumed_active(quantum * processor_mode.power_active * 0.5)
+            processor.add_power_consumed_idle(quantum * processor_mode.power_idle * 0.5)
 
-        self.prev_exec_time = system.time
-        self.deadline -= time
-        self.det_remain -= time
+            memory = memories.list[0]
+            memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
+            memory.add_power_consumed_idle(
+                quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
 
-        # calc power
-        wcet_scaled_cpu = 1 / self.cpu_frequency.wcet_scale
-        wcet_scaled_mem = 1 / self.memory.wcet_scale
-        wcet_scaled = wcet_scaled_cpu + wcet_scaled_mem
+        else:  # self.exec_mode == 'G'
+            processor_mode = processor.modes[self.ga_processor_mode]
+            memory = memories[self.ga_memory_mode]
 
-        self.cpu.add_power_consumed_active(time * self.cpu_frequency.power_active * wcet_scaled_cpu / wcet_scaled)
-        self.cpu.add_power_consumed_idle(time * self.cpu_frequency.power_idle * wcet_scaled_mem / wcet_scaled)
-        self.memory.add_power_consumed_active(
-            time * self.memory.power_active * self.memory_req * self.memory_active_ratio)
-        self.memory.add_power_consumed_idle(
-            time * self.memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
+            wcet_scaled_cpu = 1 / processor_mode.wcet_scale
+            wcet_scaled_mem = 1 / memory.wcet_scale
+            wcet_scaled = wcet_scaled_cpu + wcet_scaled_mem
 
-        # print
-        if system.verbose != system.V_NO:
-            print(f'{system.time}부터 {system.time + 1}까지 task {self.no} 실행 '
-                  f'(cpu_freq:{self.cpu_frequency.wcet_scale}, '
-                  f'memory_type:{self.memory.get_type_str()})')
+            # Processor
+            processor.add_power_consumed_active(quantum * processor_mode.power_active * wcet_scaled_cpu / wcet_scaled)
+            processor.add_power_consumed_idle(quantum * processor_mode.power_idle * wcet_scaled_mem / wcet_scaled)
+
+            # Memory
+            memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
+            memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * self.memory_active_ratio)
+
+        self.i += quantum
+        # i 변경되었으므로, b, d, D를 다시 계산
+        self.calc_d_for_pd2()
+        self.calc_b_for_pd2()
+        self.calc_D_for_pd2()
+
+
+class NonRTTask:
+    def __init__(self, no, at, bt, mem_req, mem_active_ratio):
+        # 태스크 정보
+        self.no = no
+        self.at = at
+        self.bt = bt
+        self.memory_req = mem_req
+        self.memory_active_ratio = mem_active_ratio
+
+        # 시뮬레이션 및 결과 출력을 위해 유지하는 정보
+        self.exec_time = 0
+        self.start_time = None
+        self.end_time = None
+
+    def desc_task(self) -> str:
+        return (f'    [type:None-RT, no:{self.no}, at:{self.at}, bt:{self.bt}, ' +
+                f'exec_time:{self.exec_time}, start_time:{self.start_time}]')
+
+    def exec_active(self, processor, memories, cur_time, quantum=1):
+        # Non-RT-Task는 항상 Original로 실행
+        processor_mode = processor.modes[0]
+        processor.add_power_consumed_active(quantum * processor_mode.power_active * 0.5)
+        processor.add_power_consumed_idle(quantum * processor_mode.power_idle * 0.5)
+
+        memory = memories.list[0]
+        memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
+        memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
+
+        if not self.start_time:
+            self.start_time = cur_time
+        self.exec_time += quantum
+
+    def exec_idle(self, memories, quantum=1):
+        # Non-RT-Task는 항상 Original로 실행
+        memory = memories.list[0]  # DRAM
+        memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle
+
+    def is_end(self):
+        return self.exec_time == self.bt
