@@ -22,15 +22,17 @@ class RTTask:
 
         # PD2 알고리즘을 위해 유지하는 정보.
         # i가 변경될 때만 새로 계산해주면 됨.
-        self.i = self.d = self.b = self.D = None
+        self.i_job = self.d = self.b = self.D = None
 
         # 시뮬레이션을 위해 유지하는 정보
+        self.k = 0
         self.deadline = None  # 이번 주기의 데드라인을 시간에 대한 절대적 값으로 저장
         self.next_period_start = 0  # 다음 주기의 시작을 저장
 
     def desc_task(self) -> str:
         return (f'    [type:RT, no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
-                f'det:{self.det}, exec_mode:{self.exec_mode}, deadline:{self.deadline}]')
+                f'det:{self.det}, i_job:{self.i_job}, exec_mode:{self.exec_mode}, deadline:{self.deadline}, ' +
+                "d:{}, D:{}, b:{}]".format(self.d, self.D, self.b))
 
     def __lt__(self, other):
         if self.d == other.d:
@@ -45,21 +47,21 @@ class RTTask:
         memory = memories.list[self.ga_memory_mode]
 
         if mode == 'G':
-            if not self.exec_mode or self.i == 1:
+            if not self.exec_mode or self.i_job == 1:
                 self.det = self.wcet / min(processor_mode.wcet_scale, memory.wcet_scale)
 
-            if self.exec_mode == 'O':
-                det_executed = self.i + 1
+            elif self.exec_mode == 'O':
+                det_executed = self.i_job + 1
                 det_remain = self.det - det_executed
                 changed_det_remain = det_remain / min(processor_mode.wcet_scale, memory.wcet_scale)
                 self.det = round(det_executed + changed_det_remain)
 
         else:  # mode == 'O'
-            if not self.exec_mode or self.i == 1:
+            if not self.exec_mode or self.i_job == 1:
                 self.det = self.wcet
 
-            if self.exec_mode == 'G':
-                det_executed = self.i + 1
+            elif self.exec_mode == 'G':
+                det_executed = self.i_job + 1
                 det_remain = self.det - det_executed
                 changed_det_remain = det_remain * min(processor_mode.wcet_scale, memory.wcet_scale)
                 self.det = round(det_executed + changed_det_remain)
@@ -73,20 +75,21 @@ class RTTask:
 
     def set_job(self):
         # run 하기 전 한번만 실행됨
-        self.i = 1
+        self.i_job = 1
         self.deadline = self.next_period_start = self.period
 
     def init_job(self):
         # 매 주기의 시작에 실행됨(매 job 마다 실행됨)
-        self.i = 1
+        self.i_job = 1
         self.next_period_start = self.deadline
         self.deadline += self.period
+        self.k += 1
 
     def calc_d_for_pd2(self):
-        self.d = math.ceil(self.i / (self.det / self.period))
+        self.d = math.ceil((self.k * self.det + self.i_job) / (self.det / self.period))
 
     def calc_b_for_pd2(self):
-        if abs(self.d - self.i / (self.det / self.period)) <= RTTask.EPS:
+        if abs(self.d - (self.k * self.det + self.i_job) / (self.det / self.period)) <= RTTask.EPS:
             self.b = 0
         self.b = 1
 
@@ -99,7 +102,7 @@ class RTTask:
         return True
 
     def is_finish(self):
-        return self.i >= self.det + 1
+        return self.i_job >= self.det + 1
 
     def exec_idle(self, memories, quantum=1):
         if self.exec_mode == 'O':
@@ -125,7 +128,7 @@ class RTTask:
 
         else:  # self.exec_mode == 'G'
             processor_mode = processor.modes[self.ga_processor_mode]
-            memory = memories[self.ga_memory_mode]
+            memory = memories.list[self.ga_memory_mode]
 
             wcet_scaled_cpu = 1 / processor_mode.wcet_scale
             wcet_scaled_mem = 1 / memory.wcet_scale
@@ -139,7 +142,7 @@ class RTTask:
             memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
             memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * self.memory_active_ratio)
 
-        self.i += quantum
+        self.i_job += quantum
         # i 변경되었으므로, b, d, D를 다시 계산
         self.calc_d_for_pd2()
         self.calc_b_for_pd2()

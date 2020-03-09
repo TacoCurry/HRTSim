@@ -47,8 +47,8 @@ class System(metaclass=ABCMeta):
 
         if len(self.non_rt_queue) > 0:
             print("==========non_rt_queue===========")
-            for non_rt_task in self.non_rt_tasks:
-                non_rt_task.desc_task()
+            for non_rt_task in self.non_rt_queue:
+                print(non_rt_task.desc_task())
             print("=======  non_rt_queue end==========")
 
     def check_new_non_rt(self, cur_time):
@@ -67,11 +67,6 @@ class System(metaclass=ABCMeta):
             new_start_rt_tasks.append(rt_task)
         return new_start_rt_tasks
 
-    def print_final_report(self):
-        # TODO 최종 결과 출력하는 코드
-        avg_cpu_util = self.sum_utils / self.sim_time
-        pass
-
     def push_rt_queue(self, rt_task):
         heapq.heappush(self.rt_queue, rt_task)
 
@@ -84,3 +79,29 @@ class System(metaclass=ABCMeta):
 
     def add_cpu_utilization(self, util):
         self.sum_utils += util
+
+    def print_final_report(self):
+        pass
+
+    def print_core_num(self):
+        pass
+
+    def print_task_num(self):
+        pass
+
+    def print_policy_name(self):
+        pass
+
+    def print_power(self):
+        # TODO 예원.
+        pass
+
+    def print_util(self):
+        # TODO 예원.
+        avg_cpu_util = self.sum_utils / self.sim_time
+        pass
+
+    def print_wait_time(self):
+        pass
+
+
