@@ -125,7 +125,7 @@ class RTTask:
 
         else:  # self.exec_mode == 'G'
             processor_mode = processor.modes[self.ga_processor_mode]
-            memory = memories[self.ga_memory_mode]
+            memory = memories.list[self.ga_memory_mode]
 
             wcet_scaled_cpu = 1 / processor_mode.wcet_scale
             wcet_scaled_mem = 1 / memory.wcet_scale
