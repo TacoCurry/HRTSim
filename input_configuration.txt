@@ -1,6 +1,6 @@
 ## Simulation
 simTime 1000
-verbose 1
+verbose 2
 
 # 시뮬레이션 시간
 # verbose 0:최종결과만출력, 1:태스크실행결과출력, 2:매시간마다큐출력

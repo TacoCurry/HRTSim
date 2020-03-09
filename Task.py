@@ -30,7 +30,8 @@ class RTTask:
 
     def desc_task(self) -> str:
         return (f'    [type:RT, no:{self.no}, wcet:{self.wcet}, period:{self.period}, ' +
-                f'det:{self.det}, exec_mode:{self.exec_mode}, deadline:{self.deadline}]')
+                f'det:{self.det}, i:{self.i}, exec_mode:{self.exec_mode}, deadline:{self.deadline}, ' +
+                "d:{}, D:{}, b:{}]".format(self.d, self.D, self.b))
 
     def __lt__(self, other):
         if self.d == other.d:
@@ -48,7 +49,7 @@ class RTTask:
             if not self.exec_mode or self.i == 1:
                 self.det = self.wcet / min(processor_mode.wcet_scale, memory.wcet_scale)
 
-            if self.exec_mode == 'O':
+            elif self.exec_mode == 'O':
                 det_executed = self.i + 1
                 det_remain = self.det - det_executed
                 changed_det_remain = det_remain / min(processor_mode.wcet_scale, memory.wcet_scale)
@@ -58,7 +59,7 @@ class RTTask:
             if not self.exec_mode or self.i == 1:
                 self.det = self.wcet
 
-            if self.exec_mode == 'G':
+            elif self.exec_mode == 'G':
                 det_executed = self.i + 1
                 det_remain = self.det - det_executed
                 changed_det_remain = det_remain * min(processor_mode.wcet_scale, memory.wcet_scale)

@@ -47,8 +47,8 @@ class System(metaclass=ABCMeta):
 
         if len(self.non_rt_queue) > 0:
             print("==========non_rt_queue===========")
-            for non_rt_task in self.non_rt_tasks:
-                non_rt_task.desc_task()
+            for non_rt_task in self.non_rt_queue:
+                print(non_rt_task.desc_task())
             print("=======  non_rt_queue end==========")
 
     def check_new_non_rt(self, cur_time):
