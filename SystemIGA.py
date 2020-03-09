@@ -28,9 +28,12 @@ class SystemIGA(System):
 
             # 새롭게 주기 시작하는 job이 있는지 확인.
             # non_rt_job이 존재한다면 Exec_mode 오리지널, 존재 하지 않는다면 GA로 실행
-            exec_mode = 'G' if len(self.non_rt_queue) == 0 else 'O'
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
                 self.push_rt_queue(new_start_rt_task)
+
+            exec_mode = 'G' if len(self.non_rt_queue) == 0 else 'O'
+            for rt_task in self.rt_queue:
+                rt_task.set_exec_mode(exec_mode, self.processor, self.memories)
 
             # 2. 이번 퀀텀에 실행될 Task 고르기
             rt_exec_tasks = []
@@ -78,7 +81,6 @@ class SystemIGA(System):
                                                              ",".join(map(lambda task: str(task.no), rt_exec_tasks))))
 
             for rt_task in rt_exec_tasks:
-                rt_task.set_exec_mode(exec_mode, self.processor, self.memories)
                 rt_task.exec_active(self.processor, self.memories)  # 실행
                 if rt_task.is_finish():
                     # 이번 주기에 실행을 완료했다면
