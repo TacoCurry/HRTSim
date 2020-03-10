@@ -1,6 +1,7 @@
 from abc import *
 import heapq
 from collections import deque
+from Task import RTTask, NonRTTask
 
 
 class System(metaclass=ABCMeta):
@@ -93,13 +94,24 @@ class System(metaclass=ABCMeta):
         pass
 
     def print_power(self):
-        # TODO 예원.
-        pass
+        self.memories.calc_total_power_consumed()
+
+        power_processor = self.processor.power_consumed_idle + self.processor.power_consumed_active
+        power_memory = self.memories.total_power_consumed_idle + self.memories.total_power_consumed_active
+        power_active = self.processor.power_consumed_active + self.memories.total_power_consumed_active
+        power_idle = self.processor.power_consumed_idle + self.memories.total_power_consumed_idle
+        power = power_processor + power_memory
+
+        print(f'Average power consumed: {round(power / self.sim_time, 3)}')
+        print(f'PROCESSOR + MEM power consumed: {round(power_processor / self.sim_time, 3)} + '
+              f'{round(power_memory / self.sim_time, 3)}')
+        print(f'ACTIVE + IDLE power consumed: '
+              f'{round(power_active / self.sim_time, 3)} + {round(power_idle / self.sim_time, 3)}')
+        print('RT-TASK + NONE-RT-TASK power consumed: {} + {}'.format(RTTask.total_power, NonRTTask.total_power))
 
     def print_util(self):
-        # TODO 예원.
         avg_cpu_util = self.sum_utils / self.sim_time
-        pass
+        print('utilization: {}%'.format(avg_cpu_util))
 
     def print_wait_time(self):
         pass

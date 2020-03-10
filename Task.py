@@ -2,6 +2,7 @@ import math
 
 
 class RTTask:
+    total_power = 0
     EPS = 1e-6  # 부동 소수점 비교 연산을 위해 사용
 
     def __init__(self, no, wcet, period, mem_req, mem_active_ratio):
@@ -105,14 +106,10 @@ class RTTask:
         return self.i_job >= self.det + 1
 
     def exec_idle(self, memories, quantum=1):
-        if self.exec_mode == 'O':
-            # 오리지널 자원을 이용하여 quantum 만큼 task를 idle로 실행
-            memory = memories.list[0]  # DRAM
-            memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle
-        else:  # exec_mode == 'G'
-            # ga의 결과로 할당된 자원을 이용하여 quantum 만큼 task를 idle로 실행
-            memory = memories.list[self.ga_memory_mode]
-            memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle
+        memory = memories.list[0] if self.exec_mode == 'O' else memories.list[self.ga_memory_mode]
+        power_consumed = quantum * self.memory_req * memory.power_idle
+        memory.power_consumed_idle += power_consumed
+        self.total_power += power_consumed
 
     def exec_active(self, processor, memories, quantum=1):
         if self.exec_mode == 'O':
@@ -125,6 +122,9 @@ class RTTask:
             memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
             memory.add_power_consumed_idle(
                 quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
+
+            self.total_power += quantum * 0.5 * (processor_mode.power_idle + processor_mode.power_idle)
+            self.total_power += quantum * memory.power_idle * self.memory_req
 
         else:  # self.exec_mode == 'G'
             processor_mode = processor.modes[self.ga_processor_mode]
@@ -140,7 +140,11 @@ class RTTask:
 
             # Memory
             memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
-            memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * self.memory_active_ratio)
+            memory.add_power_consumed_idle(
+                quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
+
+            self.total_power += quantum * processor_mode.power_active * wcet_scaled
+            self.total_power += quantum * memory.power_active * self.memory_req
 
         self.i_job += quantum
         # i 변경되었으므로, b, d, D를 다시 계산
@@ -150,6 +154,8 @@ class RTTask:
 
 
 class NonRTTask:
+    total_power = 0
+
     def __init__(self, no, at, bt, mem_req, mem_active_ratio):
         # 태스크 정보
         self.no = no
@@ -177,6 +183,9 @@ class NonRTTask:
         memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
         memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
 
+        self.total_power += quantum * 0.5 * (processor_mode.power_active + processor_mode.power_idle)
+        self.total_power += quantum * memory.power_active * self.memory_req
+
         if not self.start_time:
             self.start_time = cur_time
         self.exec_time += quantum
@@ -184,7 +193,9 @@ class NonRTTask:
     def exec_idle(self, memories, quantum=1):
         # Non-RT-Task는 항상 Original로 실행
         memory = memories.list[0]  # DRAM
-        memory.power_consumed_idle += quantum * self.memory_req * memory.power_idle
+        power_consumed = quantum * self.memory_req * memory.power_idle
+        memory.power_consumed_idle += power_consumed
+        self.total_power += power_consumed
 
     def is_end(self):
         return self.exec_time == self.bt

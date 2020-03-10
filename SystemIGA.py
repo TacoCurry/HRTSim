@@ -61,7 +61,7 @@ class SystemIGA(System):
             # 3. Task 실행하기
             # 3.0 util 계산하기
             # (실행 코어 개수) / (전체 코어 개수)로 이번 퀀텀의 cpu util 계산 가능
-            util = (len(rt_exec_tasks) + len(non_rt_exec_tasks)) / self.processor.n_core
+            util = (len(rt_exec_tasks) + len(non_rt_exec_tasks)) * 100 / self.processor.n_core
             self.add_cpu_utilization(util)
 
             # 3.1 Idle Processor
