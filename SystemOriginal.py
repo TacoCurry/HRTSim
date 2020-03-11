@@ -8,6 +8,7 @@ class SystemOriginal(System):
 
     def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
         super().__init__(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks)
+        self.name = "Original"
 
     def run(self):
         # Initialize rt-tasks
@@ -27,7 +28,7 @@ class SystemOriginal(System):
             self.check_new_non_rt(cur_time)  # 새롭게 들어온 non_rt_job인 이 있는지 확인
             # 새롭게 주기 시작하는 job이 있는지 확인
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
-                new_start_rt_task.set_exec_mode('O', self.processor, self.memories) # TODO 이거 지워도 되지 않나요?
+                new_start_rt_task.set_exec_mode('O', self.processor, self.memories)  # TODO 이거 지워도 되지 않나요?
                 self.push_rt_queue(new_start_rt_task)
 
             # 2. 이번 퀀텀에 실행될 Task 고르기
@@ -99,6 +100,7 @@ class SystemOriginal(System):
                 if non_rt_task.is_end():
                     # 이번 주기에 실행을 완료했다면
                     non_rt_task.end_time = cur_time + 1
+
                 else:
                     # 아직 실행이 남았다면 다시 대기 큐에 넣기
                     self.non_rt_queue.append(non_rt_task)

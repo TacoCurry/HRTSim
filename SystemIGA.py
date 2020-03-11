@@ -8,7 +8,7 @@ class SystemIGA(System):
 
     def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
         super().__init__(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks)
-
+        self.name = "IGA"
     def run(self):
         # Initialize rt-tasks
         for rt_task in self.rt_tasks:

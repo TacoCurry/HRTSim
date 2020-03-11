@@ -10,6 +10,7 @@ class System(metaclass=ABCMeta):
     VERBOSE_DEBUG_HARD = 2
 
     def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
+        self.name = None
         self.sim_time = sim_time
 
         self.verbose = verbose
@@ -82,16 +83,26 @@ class System(metaclass=ABCMeta):
         self.sum_utils += util
 
     def print_final_report(self):
-        pass
+        self.print_core_num()
+        self.print_policy_name()
+        self.print_task_num()
+        self.print_simulation_time()
+        self.print_power()
+        self.print_wait_time()
 
     def print_core_num(self):
-        pass
+        print(f'Number of core: {self.processor.n_core}')
 
     def print_task_num(self):
-        pass
+        print(f'Number of RT task: {len(self.rt_tasks)}')
+        print(f'Number of non RT task: {len(self.non_rt_tasks)}')
+        print(f'Number of total task: {len(self.rt_tasks)} + {len(self.non_rt_tasks)}')
 
     def print_policy_name(self):
-        pass
+        print(f'Name of policy: {self.name}')
+
+    def print_simulation_time(self):
+        print(f'Simulation_time: {self.sim_time}')
 
     def print_power(self):
         self.memories.calc_total_power_consumed()
@@ -114,6 +125,16 @@ class System(metaclass=ABCMeta):
         print('utilization: {}%'.format(avg_cpu_util))
 
     def print_wait_time(self):
-        pass
-
-
+        total_wait_time = 0
+        total_response_time = 0
+        total_turnaround_time = 0
+        for non_rt_task in self.non_rt_tasks:
+            wait_time = (non_rt_task.end_time - non_rt_task.at) - non_rt_task.bt
+            total_wait_time += wait_time
+            response_time = non_rt_task.start_time - non_rt_task.at
+            total_response_time += response_time
+            turnaround_time = non_rt_task.end_time - non_rt_task.at
+            total_turnaround_time += turnaround_time
+        print(f'Average wait time: {format(total_wait_time/len(self.non_rt_tasks),".4f")}')
+        print(f'Average response time: {format(total_response_time/len(self.non_rt_tasks), ".4f")}')
+        print(f'Average turnaround time: {format(total_turnaround_time/len(self.non_rt_tasks),".4f")}')
