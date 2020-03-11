@@ -109,7 +109,7 @@ class RTTask:
         memory = memories.list[0] if self.exec_mode == 'O' else memories.list[self.ga_memory_mode]
         power_consumed = quantum * self.memory_req * memory.power_idle
         memory.power_consumed_idle += power_consumed
-        self.total_power += power_consumed
+        RTTask.total_power += power_consumed
 
     def exec_active(self, processor, memories, quantum=1):
         if self.exec_mode == 'O':
@@ -123,8 +123,8 @@ class RTTask:
             memory.add_power_consumed_idle(
                 quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
 
-            self.total_power += quantum * 0.5 * (processor_mode.power_idle + processor_mode.power_idle)
-            self.total_power += quantum * memory.power_idle * self.memory_req
+            RTTask.total_power += quantum * 0.5 * (processor_mode.power_idle + processor_mode.power_idle)
+            RTTask.total_power += quantum * memory.power_idle * self.memory_req
 
         else:  # self.exec_mode == 'G'
             processor_mode = processor.modes[self.ga_processor_mode]
@@ -143,8 +143,8 @@ class RTTask:
             memory.add_power_consumed_idle(
                 quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
 
-            self.total_power += quantum * processor_mode.power_active * wcet_scaled
-            self.total_power += quantum * memory.power_active * self.memory_req
+            RTTask.total_power += quantum * processor_mode.power_active * wcet_scaled
+            RTTask.total_power += quantum * memory.power_active * self.memory_req
 
         self.i_job += quantum
         # i 변경되었으므로, b, d, D를 다시 계산
@@ -183,8 +183,8 @@ class NonRTTask:
         memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
         memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
 
-        self.total_power += quantum * 0.5 * (processor_mode.power_active + processor_mode.power_idle)
-        self.total_power += quantum * memory.power_active * self.memory_req
+        NonRTTask.total_power += quantum * 0.5 * (processor_mode.power_active + processor_mode.power_idle)
+        NonRTTask.total_power += quantum * memory.power_active * self.memory_req
 
         if not self.start_time:
             self.start_time = cur_time
@@ -195,7 +195,7 @@ class NonRTTask:
         memory = memories.list[0]  # DRAM
         power_consumed = quantum * self.memory_req * memory.power_idle
         memory.power_consumed_idle += power_consumed
-        self.total_power += power_consumed
+        NonRTTask.total_power += power_consumed
 
     def is_end(self):
         return self.exec_time == self.bt

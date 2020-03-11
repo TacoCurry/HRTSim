@@ -120,7 +120,8 @@ class System(metaclass=ABCMeta):
               f'{round(power_memory / self.sim_time, 3)}')
         print(f'ACTIVE + IDLE power consumed: '
               f'{round(power_active / self.sim_time, 3)} + {round(power_idle / self.sim_time, 3)}')
-        print('RT-TASK + NONE-RT-TASK power consumed: {} + {}'.format(RTTask.total_power, NonRTTask.total_power))
+        print('RT-TASK + NONE-RT-TASK power consumed: {} + {}'.format(round(RTTask.total_power / self.sim_time, 3),
+                                                                      round(NonRTTask.total_power / self.sim_time, 3)))
 
     def print_util(self):
         avg_cpu_util = self.sum_utils / self.sim_time
@@ -139,6 +140,6 @@ class System(metaclass=ABCMeta):
                 turnaround_time = non_rt_task.end_time - non_rt_task.at
                 total_turnaround_time += turnaround_time
 
-        print(f'Average wait time: {format(total_wait_time/count,".4f")}')
-        print(f'Average response time: {format(total_response_time/count, ".4f")}')
-        print(f'Average turnaround time: {format(total_turnaround_time/count,".4f")}')
+        print(f'Average wait time: {format(total_wait_time / count, ".4f")}')
+        print(f'Average response time: {format(total_response_time / count, ".4f")}')
+        print(f'Average turnaround time: {format(total_turnaround_time / count, ".4f")}')
