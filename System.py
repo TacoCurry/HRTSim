@@ -127,17 +127,18 @@ class System(metaclass=ABCMeta):
         print('utilization: {}%'.format(avg_cpu_util))
 
     def print_wait_time(self):
-        total_wait_time = 0
-        total_response_time = 0
-        total_turnaround_time = 0
+        total_wait_time = total_response_time = total_turnaround_time = count = 0
+
         for non_rt_task in self.non_rt_tasks:
-            if(non_rt_task.end_time != 0 and non_rt_task.start_time != 0):
+            if non_rt_task.start_time:
+                count += 1
                 wait_time = (non_rt_task.end_time - non_rt_task.at) - non_rt_task.bt
                 total_wait_time += wait_time
                 response_time = non_rt_task.start_time - non_rt_task.at
                 total_response_time += response_time
                 turnaround_time = non_rt_task.end_time - non_rt_task.at
                 total_turnaround_time += turnaround_time
-        print(f'Average wait time: {format(total_wait_time/len(self.non_rt_tasks),".4f")}')
-        print(f'Average response time: {format(total_response_time/len(self.non_rt_tasks), ".4f")}')
-        print(f'Average turnaround time: {format(total_turnaround_time/len(self.non_rt_tasks),".4f")}')
+
+        print(f'Average wait time: {format(total_wait_time/count,".4f")}')
+        print(f'Average response time: {format(total_response_time/count, ".4f")}')
+        print(f'Average turnaround time: {format(total_turnaround_time/count,".4f")}')
