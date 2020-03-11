@@ -90,6 +90,7 @@ class System(metaclass=ABCMeta):
         self.print_simulation_time()
         self.print_power()
         self.print_wait_time()
+        self.print_util()
         print("===========================================")
 
     def print_core_num(self):
