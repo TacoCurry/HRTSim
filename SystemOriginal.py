@@ -28,7 +28,6 @@ class SystemOriginal(System):
             self.check_new_non_rt(cur_time)  # 새롭게 들어온 non_rt_job인 이 있는지 확인
             # 새롭게 주기 시작하는 job이 있는지 확인
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
-                new_start_rt_task.set_exec_mode('O', self.processor, self.memories)  # TODO 이거 지워도 되지 않나요?
                 self.push_rt_queue(new_start_rt_task)
 
             # 2. 이번 퀀텀에 실행될 Task 고르기
