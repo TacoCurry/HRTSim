@@ -166,8 +166,8 @@ class NonRTTask:
 
         # 시뮬레이션 및 결과 출력을 위해 유지하는 정보
         self.exec_time = 0
-        self.start_time = None
-        self.end_time = None
+        self.start_time = 0
+        self.end_time = 0
 
     def desc_task(self) -> str:
         return (f'    [type:None-RT, no:{self.no}, at:{self.at}, bt:{self.bt}, ' +

@@ -83,12 +83,14 @@ class System(metaclass=ABCMeta):
         self.sum_utils += util
 
     def print_final_report(self):
+        print("===============final report===============")
         self.print_core_num()
         self.print_policy_name()
         self.print_task_num()
         self.print_simulation_time()
         self.print_power()
         self.print_wait_time()
+        print("===========================================")
 
     def print_core_num(self):
         print(f'Number of core: {self.processor.n_core}')
@@ -129,12 +131,13 @@ class System(metaclass=ABCMeta):
         total_response_time = 0
         total_turnaround_time = 0
         for non_rt_task in self.non_rt_tasks:
-            wait_time = (non_rt_task.end_time - non_rt_task.at) - non_rt_task.bt
-            total_wait_time += wait_time
-            response_time = non_rt_task.start_time - non_rt_task.at
-            total_response_time += response_time
-            turnaround_time = non_rt_task.end_time - non_rt_task.at
-            total_turnaround_time += turnaround_time
+            if(non_rt_task.end_time != 0 and non_rt_task.start_time != 0):
+                wait_time = (non_rt_task.end_time - non_rt_task.at) - non_rt_task.bt
+                total_wait_time += wait_time
+                response_time = non_rt_task.start_time - non_rt_task.at
+                total_response_time += response_time
+                turnaround_time = non_rt_task.end_time - non_rt_task.at
+                total_turnaround_time += turnaround_time
         print(f'Average wait time: {format(total_wait_time/len(self.non_rt_tasks),".4f")}')
         print(f'Average response time: {format(total_response_time/len(self.non_rt_tasks), ".4f")}')
         print(f'Average turnaround time: {format(total_turnaround_time/len(self.non_rt_tasks),".4f")}')
