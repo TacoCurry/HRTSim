@@ -8,6 +8,7 @@ class SystemGA(System):
 
     def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
         super().__init__(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks)
+        self.name = "GA"
 
     def run(self):
         # Initialize rt-tasks
@@ -59,7 +60,7 @@ class SystemGA(System):
             # 3. Task 실행하기
             # 3.0 util 계산하기
             # (실행 코어 개수) / (전체 코어 개수)로 이번 퀀텀의 cpu util 계산 가능
-            util = (len(rt_exec_tasks) + len(non_rt_exec_tasks)) / self.processor.n_core
+            util = (len(rt_exec_tasks) + len(non_rt_exec_tasks)) * 100 / self.processor.n_core
             self.add_cpu_utilization(util)
 
             # 3.1 Idle Processor
