@@ -10,7 +10,12 @@ class SystemPS(System):
         self.name = "PS(PreservedSingle)"
 
     def run(self):
+
         # TODO Original로 할 때, Util 얼마인지 계산. 이게 코어 1개 뺀거 (N-1)보다 크다면 아예 이 방법 못쓰니까 출력하고 바로 종
+        util_original = pass
+        if util_original > self.processor.n_core - 1:
+            raise Exception(self.desc_task() + ": deadline failure")
+
 
         # Initialize rt-tasks
         for rt_task in self.rt_tasks:
@@ -27,32 +32,46 @@ class SystemPS(System):
 
             # 1. 새로운 RT-task 및 Non-RT-task 확인하기
             self.check_new_non_rt(cur_time)  # 새롭게 들어온 non_rt_job인 이 있는지 확인
+
+
+
             # 새롭게 주기 시작하는 job이 있는지 확인
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
-                new_start_rt_task.set_exec_mode('O', self.processor, self.memories)  # TODO 이거 지워도 되지 않나요?
                 self.push_rt_queue(new_start_rt_task)
+
+            # TODO  non_rt_job이 존재한다면 Exec_mode 코어 n개 GA, 존재 하지 않는다면 (n-1) GA로 실행
+            # TODO 코어의 수 받아서 n 과 n-1에 관한 Exec_mode 설정
+
+            core_num = self.processor.n_core
+            exec_mode = 'G(n)' if len(self.non_rt_queue) == 0 else 'G(n-1)'
+
+            for rt_task in self.rt_queue:
+                rt_task.set_exec_mode(exec_mode, self.processor, self.memories)
+
+
 
             # 2. 이번 퀀텀에 실행될 Task 고르기
             rt_exec_tasks = []
             non_rt_exec_tasks = []
 
-            if len(self.rt_queue) <= self.processor.n_core:
+            # TODO n-1 만큼의 실시간 태스크
+            if len(self.rt_queue) <= self.processor.n_core - 1:
                 # 이번 퀀텀에 실행할 RT-task 고르기
                 # 큐에 있는 RT-task 모두 실행가능(코어의 개수보다 적거나 같으므)
                 rt_exec_tasks = self.rt_queue
                 self.rt_queue = []
-
+                # TODO 1 만큼의 실시간 태스크: 1개만 고르기?
                 # 이번 퀀텀에 실행할 Non-RT-task 고르기
-                for _ in range(self.processor.n_core - len(rt_exec_tasks)):
+                for _ in range(1):
                     if len(self.non_rt_queue) <= 0:
                         break
                     non_rt_exec_tasks.append(self.non_rt_queue.popleft())
 
             else:
                 # 이번 퀀텀에 실행할 RT-task 고르기
-                # 큐에 있는 RT-task 의 개수가 코어보다 많으므로, RT-task 를 코어개수만 고르기큼
+                # 큐에 있는 RT-task 의 개수가 코어보다 많으므로, RT-task 를 "코어개수 - 1" 만 고르기
                 # RT-task가 먼저이기 때문에 Non-RT-task는 실행 안함.
-                for _ in range(self.processor.n_core):
+                for _ in range(self.processor.n_core - 1):
                     rt_exec_tasks.append(heapq.heappop(self.rt_queue))
 
             # 3. Task 실행하기
@@ -70,7 +89,7 @@ class SystemPS(System):
             for non_exec_rt_task in self.rt_queue:
                 non_exec_rt_task.exec_idle(self.memories)
             for (_, non_exec_rt_task) in self.rt_wait_queue:
-                non_exec_rt_task.exec_idle(self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
+                non_exec_rt_task.exec_idle(self.memories)
 
             # for active rt-tasks
             if len(rt_exec_tasks) > 0 and self.verbose != System.VERBOSE_SIMPLE:
