@@ -18,8 +18,8 @@ class RTTask:
         self.ga_memory_mode = None
 
         # DVFS 및 HM의 적용으로 변화하는 wcet를 저장함.
-        self.det = None
-        self.exec_mode = None  # 'O'(Original) 혹은 'G'(GA)로 현재 실행모드를 저장함.
+        self.det = wcet
+        self.exec_mode = 'O'  # 'O'(Original) 혹은 'G'(GA)로 현재 실행모드를 저장함.
         self.exec_mode_num = None
 
         # PD2 알고리즘을 위해 유지하는 정보.
@@ -63,7 +63,7 @@ class RTTask:
                 det_executed = self.i_job + 1
                 det_remain = self.det - det_executed
                 changed_det_remain = det_remain * min(pre_processor_mode.wcet_scale, pre_memory.wcet_scale) \
-                                     / min(new_processor_mode, new_memory)
+                                     / min(new_processor_mode.wcet_scale, new_memory.wcet_scale)
                 self.det = round(det_executed + changed_det_remain)
 
         else:  # mode == 'O'
@@ -99,6 +99,9 @@ class RTTask:
         self.next_period_start = self.deadline
         self.deadline += self.period
         self.k += 1
+
+        self.exec_mode = 'O'
+        self.det = self.wcet
 
     def calc_d_for_pd2(self):
         self.d = math.ceil((self.k * self.det + self.i_job) / (self.det / self.period))
