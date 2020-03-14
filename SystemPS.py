@@ -27,10 +27,15 @@ class SystemPS(System):
 
             # 1. 새로운 RT-task 및 Non-RT-task 확인하기
             self.check_new_non_rt(cur_time)  # 새롭게 들어온 non_rt_job인 이 있는지 확인
-            # 새롭게 주기 시작하는 job이 있는지 확인
+
+            # 새롭게 주기 시작하는 job이 있는지 확인.
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
-                new_start_rt_task.set_exec_mode('O', self.processor, self.memories)  # TODO 이거 지워도 되지 않나요?
                 self.push_rt_queue(new_start_rt_task)
+
+            # non_rt_job이 존재한다면 Exec_mode 오리지널, 존재 하지 않는다면 GA로 실행
+            exec_mode = 'G' if len(self.non_rt_queue) == 0 else 'O'
+            for rt_task in self.rt_queue:
+                rt_task.set_exec_mode(exec_mode, self.processor, self.memories)
 
             # 2. 이번 퀀텀에 실행될 Task 고르기
             rt_exec_tasks = []
@@ -68,14 +73,15 @@ class SystemPS(System):
             # 3.2 RT-task
             # for other non-active rt-tasks (이번 주기에 실행이 안되더라도 메모리는 차지하고 있으므로)
             for non_exec_rt_task in self.rt_queue:
-                non_exec_rt_task.exec_idle(self.memories)
+                non_exec_rt_task.exec_idle(self.processor, self.memories)
             for (_, non_exec_rt_task) in self.rt_wait_queue:
-                non_exec_rt_task.exec_idle(self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
+                non_exec_rt_task.exec_idle(self.processor, self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
 
             # for active rt-tasks
             if len(rt_exec_tasks) > 0 and self.verbose != System.VERBOSE_SIMPLE:
                 print("{}~{} quantum, RT-Task {} 실행함".format(cur_time, cur_time + 1,
                                                              ",".join(map(lambda task: str(task.no), rt_exec_tasks))))
+
             for rt_task in rt_exec_tasks:
                 rt_task.exec_active(self.processor, self.memories)  # 실행
                 if rt_task.is_finish():
@@ -101,7 +107,6 @@ class SystemPS(System):
                 if non_rt_task.is_end():
                     # 이번 주기에 실행을 완료했다면
                     non_rt_task.end_time = cur_time + 1
-
                 else:
                     # 아직 실행이 남았다면 다시 대기 큐에 넣기
                     self.non_rt_queue.append(non_rt_task)

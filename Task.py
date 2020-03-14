@@ -20,6 +20,7 @@ class RTTask:
         # DVFS 및 HM의 적용으로 변화하는 wcet를 저장함.
         self.det = None
         self.exec_mode = None  # 'O'(Original) 혹은 'G'(GA)로 현재 실행모드를 저장함.
+        self.exec_mode_num = None
 
         # PD2 알고리즘을 위해 유지하는 정보.
         # i가 변경될 때만 새로 계산해주면 됨.
@@ -42,10 +43,11 @@ class RTTask:
             return self.b > other.b
         return self.d < other.d
 
-    def set_exec_mode(self, mode, processor, memories):
+    def set_exec_mode(self, mode, mode_num, processor, memories):
+        # TODO 살려주세요.
         # 'G(GA)' 혹은 'O(Original)'로 실행 모드를 변경하고 det도 다시 계산.
-        processor_mode = processor.modes[self.ga_processor_mode]
-        memory = memories.list[self.ga_memory_mode]
+        processor_mode = processor.modes[self.ga_processor_mode[mode_num]]
+        memory = memories.list[self.ga_memory_mode[mode_num]]
 
         if mode == 'G':
             if not self.exec_mode or self.i_job == 1:
@@ -105,8 +107,8 @@ class RTTask:
     def is_finish(self):
         return self.i_job >= self.det + 1
 
-    def exec_idle(self, memories, quantum=1):
-        memory = memories.list[0] if self.exec_mode == 'O' else memories.list[self.ga_memory_mode]
+    def exec_idle(self, processor, memories, quantum=1):
+        memory = memories.list[0] if self.exec_mode == 'O' else memories.list[self.ga_memory_mode[processor.n_core]]
         power_consumed = quantum * self.memory_req * memory.power_idle
         memory.power_consumed_idle += power_consumed
         RTTask.total_power += power_consumed
@@ -127,8 +129,8 @@ class RTTask:
             RTTask.total_power += quantum * memory.power_idle * self.memory_req
 
         else:  # self.exec_mode == 'G'
-            processor_mode = processor.modes[self.ga_processor_mode]
-            memory = memories.list[self.ga_memory_mode]
+            processor_mode = processor.modes[self.ga_processor_mode[processor.n_core]]
+            memory = memories.list[self.ga_memory_mode[processor.n_core]]
 
             wcet_scaled_cpu = 1 / processor_mode.wcet_scale
             wcet_scaled_mem = 1 / memory.wcet_scale

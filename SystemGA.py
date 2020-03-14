@@ -70,9 +70,9 @@ class SystemGA(System):
             # 3.2 RT-task
             # for other non-active rt-tasks (이번 주기에 실행이 안되더라도 메모리는 차지하고 있으므로)
             for non_exec_rt_task in self.rt_queue:
-                non_exec_rt_task.exec_idle(self.memories)
+                non_exec_rt_task.exec_idle(self.processor, self.memories)
             for (_, non_exec_rt_task) in self.rt_wait_queue:
-                non_exec_rt_task.exec_idle(self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
+                non_exec_rt_task.exec_idle(self.processor, self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
 
             # for active rt-tasks
             if len(rt_exec_tasks) > 0 and self.verbose != System.VERBOSE_SIMPLE:
