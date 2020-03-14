@@ -132,7 +132,7 @@ class System(metaclass=ABCMeta):
         total_wait_time = total_response_time = total_turnaround_time = count = 0
 
         for non_rt_task in self.non_rt_tasks:
-            if non_rt_task.start_time:
+            if non_rt_task.end_time:
                 count += 1
                 wait_time = (non_rt_task.end_time - non_rt_task.at) - non_rt_task.bt
                 total_wait_time += wait_time

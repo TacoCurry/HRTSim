@@ -17,6 +17,10 @@ class SystemADH(System):
             rt_task.set_exec_mode('O', self.processor, self.memories)
             self.push_rt_queue(rt_task)
 
+        # Set NonRT DVFS-HM
+        for non_rt_task in self.non_rt_tasks:
+            non_rt_task.set_exec_mode(self, 'DH', self.processor, self.memories)
+
         cur_time = 0
         while cur_time < self.sim_time:
             if self.verbose != System.VERBOSE_SIMPLE:

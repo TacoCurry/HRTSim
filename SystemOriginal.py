@@ -14,7 +14,7 @@ class SystemOriginal(System):
         # Initialize rt-tasks
         for rt_task in self.rt_tasks:
             rt_task.set_job()
-            rt_task.set_exec_mode('O', self.processor, self.memories)
+            rt_task.set_exec_mode('O', 0, self.processor, self.memories)
             self.push_rt_queue(rt_task)
 
         cur_time = 0
