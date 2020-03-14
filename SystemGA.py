@@ -30,6 +30,7 @@ class SystemGA(System):
             # 새롭게 주기 시작하는 job이 있는지 확인.
             # non_rt_job이 존재한다면 Exec_mode 오리지널, 존재 하지 않는다면 GA로 실행
             exec_mode = 'G' if len(self.non_rt_queue) == 0 else 'O'
+
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
                 new_start_rt_task.set_exec_mode(exec_mode, self.processor, self.memories)
                 self.push_rt_queue(new_start_rt_task)
