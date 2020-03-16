@@ -95,10 +95,18 @@ def get_non_rt_tasks(input_file="input_nonrt_tasks.txt"):
 def set_ga_results(rt_tasks, input_file="input_ga_result.txt"):
     try:
         with open(input_file, "r", encoding='UTF8') as f:
+            max_core, min_core = tuple(map(int, f.readline().split()))
+
             for task in rt_tasks:
-                line = list(map(int, f.readline().split()))
-                task.ga_processor_mode = line[0]
-                task.ga_memory_mode = line[1]
+                task.ga_processor_modes = [0 for _ in range(max_core + 1)]
+                task.ga_memory_modes = [0 for _ in range(max_core + 1)]
+
+            for core in (max_core, min_core - 1, -1):
+                f.readline()
+                for task in rt_tasks:
+                    line = list(map(int, f.readline().split()))
+                    task.ga_processor_modes[core] = line[0]
+                    task.ga_memory_modes[core] = line[1]
 
     except FileNotFoundError:
         print("Cannot find {}".format(input_file))
