@@ -67,7 +67,8 @@ class RTTask:
 
         det_executed = self.i_job + 1
         det_remain = self.det - det_executed
-        changed_det_remain = det_remain * min(pre_processor_mode.wcet_scale, pre_memory.wcet_scale) / min(new_processor_mode.wcet_scale, new_memory.wcet_scale)
+        changed_det_remain = det_remain * min(pre_processor_mode.wcet_scale, pre_memory.wcet_scale) / min(
+            new_processor_mode.wcet_scale, new_memory.wcet_scale)
         self.det = round(det_executed + changed_det_remain)
 
         self.exec_mode = mode
@@ -189,17 +190,37 @@ class NonRTTask:
         self.start_time = None
         self.end_time = None
 
+        # 'O' or 'DH'
+        self.exec_mode = 'O'
+        self.det = bt
+
     def desc_task(self) -> str:
         return (f'    [type:None-RT, no:{self.no}, at:{self.at}, bt:{self.bt}, ' +
                 f'exec_time:{self.exec_time}, start_time:{self.start_time}]')
 
+    def set_exec_mode(self, processor, memories, mode):
+        if self.exec_mode == mode:
+            return
+
+        self.exec_mode = mode
+
+        det_executed = self.exec_time
+        det_remain = self.det - det_executed
+
+        processor_mode = processor.modes[-1]
+        memory = memories.list[-1]
+
+        changed_det_remain = det_remain / min(processor_mode.wcet_scale, memory.wcet_scale) \
+            if mode == 'DH' else det_remain * min(processor_mode.wcet_scale, memory.wcet_scale)
+        self.det = round(det_executed + changed_det_remain)
+
     def exec_active(self, processor, memories, cur_time, quantum=1):
         # Non-RT-Task는 항상 Original로 실행
-        processor_mode = processor.modes[0]
+        processor_mode = processor.modes[0] if self.exec_mode == 'O' else processor.modes[-1]
         processor.add_power_consumed_active(quantum * processor_mode.power_active * 0.5)
         processor.add_power_consumed_idle(quantum * processor_mode.power_idle * 0.5)
 
-        memory = memories.list[0]
+        memory = memories.list[0] if self.exec_mode == 'O' else memories.list[-1]
         memory.add_power_consumed_active(quantum * memory.power_active * self.memory_req * self.memory_active_ratio)
         memory.add_power_consumed_idle(quantum * memory.power_idle * self.memory_req * (1 - self.memory_active_ratio))
 
@@ -212,12 +233,10 @@ class NonRTTask:
 
     def exec_idle(self, memories, quantum=1):
         # Non-RT-Task는 항상 Original로 실행
-        memory = memories.list[0]  # DRAM
+        memory = memories.list[0] if self.exec_mode == 'O' else memories.list[-1]
         power_consumed = quantum * self.memory_req * memory.power_idle
         memory.power_consumed_idle += power_consumed
         NonRTTask.total_power += power_consumed
 
     def is_end(self):
         return self.exec_time == self.bt
-
-
