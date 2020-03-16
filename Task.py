@@ -196,7 +196,7 @@ class NonRTTask:
 
     def desc_task(self) -> str:
         return (f'    [type:None-RT, no:{self.no}, at:{self.at}, bt:{self.bt}, ' +
-                f'exec_time:{self.exec_time}, start_time:{self.start_time}]')
+                f'exec_time:{self.exec_time}, start_time:{self.start_time}, det: {self.det}')
 
     def set_exec_mode(self, processor, memories, mode):
         if self.exec_mode == mode:
@@ -239,4 +239,4 @@ class NonRTTask:
         NonRTTask.total_power += power_consumed
 
     def is_end(self):
-        return self.exec_time == self.bt
+        return self.exec_time == self.det
