@@ -108,6 +108,8 @@ def set_ga_results(rt_tasks, input_file="input_ga_result.txt"):
                     task.ga_processor_modes[core] = line[0]
                     task.ga_memory_modes[core] = line[1]
 
+            return max_core, min_core
+
     except FileNotFoundError:
         print("Cannot find {}".format(input_file))
         sys.exit(0)

@@ -37,17 +37,24 @@ class SystemPS(System):
                 self.push_rt_queue(new_start_rt_task)
 
             # 2. 이번 퀀텀에 실행될 Task 고르기
-            is_non_rt = len(self.non_rt_queue) != 0
             rt_exec_tasks = []
             non_rt_exec_tasks = []
 
+            # non-rt 없으면 전체코어-GA 모드로, 있으면 코어한개제외-GA 모드로
+            mode = self.processor.n_core if len(self.non_rt_queue) == 0 else self.processor.n_core - 1
+            for i, rt_task in enumerate(self.rt_queue):
+                rt_task.set_exec_mode(self.processor, self.memories, 'G', mode)
+                if rt_task.is_finish():
+                    rt_task.init_job()
+                    self.push_rt_wait_queue(self.rt_queue.pop(i))
+            heapq.heapify(self.rt_queue)
+
             # RT-Task 고르기
-            for _ in range(min(self.processor.n_core if not is_non_rt else self.processor.n_core - 1,
-                               len(self.rt_queue))):
+            for _ in range(min(mode, len(self.rt_queue))):
                 rt_exec_tasks.append(heapq.heappop(self.rt_queue))
 
             # 이번 퀀텀에 실행할 Non-RT-task 고르기
-            if is_non_rt:
+            for _ in range(min(self.processor.n_core - len(rt_exec_tasks), len(self.non_rt_queue))):
                 non_rt_exec_tasks.append(self.non_rt_queue.popleft())
 
             # 3. Task 실행하기
@@ -74,8 +81,6 @@ class SystemPS(System):
                                                              ",".join(
                                                                  map(lambda task: str(task.no), rt_exec_tasks))))
             for rt_task in rt_exec_tasks:
-                rt_task.set_exec_mode(self.processor, self.memories, 'G',
-                                      self.processor.n_core - 1 if is_non_rt else self.processor.n_core)
                 rt_task.exec_active(self.processor, self.memories)  # 실행
 
                 if rt_task.is_finish():

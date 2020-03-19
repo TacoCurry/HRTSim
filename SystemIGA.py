@@ -39,24 +39,10 @@ class SystemIGA(System):
             rt_exec_tasks = []
             non_rt_exec_tasks = []
 
-            if len(self.rt_queue) <= self.processor.n_core:
-                # 이번 퀀텀에 실행할 RT-task 고르기
-                # 큐에 있는 RT-task 모두 실행가능(코어의 개수보다 적거나 같으므)
-                rt_exec_tasks = self.rt_queue
-                self.rt_queue = []
-
-                # 이번 퀀텀에 실행할 Non-RT-task 고르기
-                for _ in range(self.processor.n_core - len(rt_exec_tasks)):
-                    if len(self.non_rt_queue) <= 0:
-                        break
-                    non_rt_exec_tasks.append(self.non_rt_queue.popleft())
-
-            else:
-                # 이번 퀀텀에 실행할 RT-task 고르기
-                # 큐에 있는 RT-task 의 개수가 코어보다 많으므로, RT-task 를 코어개수만 고르기큼
-                # RT-task가 먼저이기 때문에 Non-RT-task는 실행 안함.
-                for _ in range(self.processor.n_core):
-                    rt_exec_tasks.append(heapq.heappop(self.rt_queue))
+            for _ in range(min(len(self.rt_queue), self.processor.n_core)):
+                rt_exec_tasks.append(heapq.heappop(self.rt_queue))
+            for _ in range(min(self.processor.n_core - len(rt_exec_tasks), len(self.non_rt_queue))):
+                non_rt_exec_tasks.append(self.non_rt_queue.popleft())
 
             # 3. Task 실행하기
             # 3.0 util 계산하기
@@ -73,7 +59,7 @@ class SystemIGA(System):
             for non_exec_rt_task in self.rt_queue:
                 non_exec_rt_task.exec_idle(self.memories)
             for (_, non_exec_rt_task) in self.rt_wait_queue:
-                non_exec_rt_task.exec_idle(self.memories)  # TODO 이번 주기 끝난 애들도 메모리 차지하고 있나요? 헷갈려
+                non_exec_rt_task.exec_idle(self.memories)
 
             # for active rt-tasks
             if len(rt_exec_tasks) > 0 and self.verbose != System.VERBOSE_SIMPLE:
