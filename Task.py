@@ -65,8 +65,6 @@ class RTTask:
             new_processor_mode = processor.modes[self.ga_processor_modes[ga_mode]]
             new_memory = memories.list[self.ga_memory_modes[ga_mode]]
 
-        # TODO GA(n-1) 모드 추가?
-
         det_executed = self.i_job + 1
         det_remain = self.det - det_executed
         changed_det_remain = det_remain * min(pre_processor_mode.wcet_scale, pre_memory.wcet_scale) / min(

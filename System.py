@@ -82,6 +82,9 @@ class System(metaclass=ABCMeta):
     def add_cpu_utilization(self, util):
         self.sum_utils += util
 
+    def calc_original_util(self):
+        return sum([task.wcet/task.period for task in self.rt_tasks])
+
     def print_final_report(self):
         print("===============final report===============")
         self.print_core_num()
