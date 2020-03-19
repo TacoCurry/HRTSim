@@ -2,6 +2,7 @@ from SystemOriginal import SystemOriginal
 from SystemGA import SystemGA
 from SystemIGA import SystemIGA
 from SystemADH import SystemADH
+from SystemPS import SystemPS
 from Input import *
 from Task import RTTask, NonRTTask
 
@@ -42,4 +43,14 @@ non_rt_tasks = get_non_rt_tasks()
 set_ga_results(rt_tasks)
 
 SystemADH(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).run()
+
+# PS(비실시간 담당 코어가 1)
+RTTask.total_power = NonRTTask.total_power = 0
+sim_time, verbose, processor, memories = get_configuration()
+rt_tasks = get_rt_tasks()
+non_rt_tasks = get_non_rt_tasks()
+set_ga_results(rt_tasks)
+
+SystemPS(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks).run()
+
 

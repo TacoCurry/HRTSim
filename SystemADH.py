@@ -4,10 +4,11 @@ import heapq
 class SystemADH(System):
     # 대기중인 non-rt-task가 존재하면 rt-task눈 Original과 같은 방식으로 실행.
     # 존재하지 않는다면 유전 알고리즘 결과(IGA)를 이용하여 실행.
+    # IGA + 비실시간 태스크에 대해서도 DVFS HM을 적용함.
 
     def __init__(self, sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks):
         super().__init__(sim_time, verbose, processor, memories, rt_tasks, non_rt_tasks)
-        self.name = "ADH"
+        self.name = "ADH(all-dvfs-hm)"
 
     def run(self):
         # Initialize rt-tasks
@@ -26,11 +27,14 @@ class SystemADH(System):
                 print("\ncurrent time: {}".format(cur_time))
             if self.verbose == System.VERBOSE_DEBUG_HARD:
                 self.print_debug(cur_time)
-                # 1. 새로운 RT-task 및 Non-RT-task 확인하기
+
+            # 1. 새로운 RT-task 및 Non-RT-task 확인하기
+
             self.check_new_non_rt(cur_time)  # 새롭게 들어온 non_rt_job인 이 있는지 확인
 
-                # 새롭게 주기 시작하는 job이 있는지 확인.
-                # non_rt_job이 존재한다면 Exec_mode 오리지널, 존재 하지 않는다면 GA로 실행
+            # 새롭게 주기 시작하는 job이 있는지 확인.
+            # non_rt_job이 존재한다면 Exec_mode 오리지널, 존재 하지 않는다면 GA로 실행
+
             for new_start_rt_task in self.check_wait_period_queue(cur_time):
                 self.push_rt_queue(new_start_rt_task)
 
