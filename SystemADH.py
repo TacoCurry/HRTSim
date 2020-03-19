@@ -75,7 +75,7 @@ class SystemADH(System):
 
             # 3.1 Idle Processor
             for _ in range(self.processor.n_core - len(rt_exec_tasks) - len(non_rt_exec_tasks)):
-                self.processor.exec_idle_without_dvfs()
+                self.processor.exec_idle_with_dvfs()
 
             # 3.2 RT-task
                 # for other non-active rt-tasks (이번 주기에 실행이 안되더라도 메모리는 차지하고 있으므로)
